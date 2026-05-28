@@ -18,17 +18,34 @@ DNDCard reposuna `agent-cards/` adında yeni bir modül eklendi. Bu modül, Clau
 - **Veri kaynağı:** `agent-cards/js/JSON/agents.json` — 15 gerçek agent (CLAUDE.md listesinden)
 - **Canvas boyutu:** 612×792 (mevcut D&D kartlarıyla aynı, standart kart boyutu)
 
-## Kart layout (canvas render sırası)
-1. Gradient background (accent rengi → koyu alt)
-2. Radial glow (üst merkez)
-3. Nokta doku overlay
-4. Header: emoji (64px) + agent adı (bold, ~34px) + kategori badge (pill)
-5. Separator line
-6. Description (word-wrapped, ~13px, gri)
-7. YETENEKLER section (label + bullet points)
-8. ARAÇLAR section (label + pill chips, satır wrap'li)
-9. Footer (@agent-id + "Claude Code Agent")
-10. Border (accent rengi, yarı saydam)
+## Kart layout — Portrait model (v2)
+
+Referans projeler:
+- **DnDGen card-script.js**: backgroundImage + characterImage iki katman sistemi → iki tier image resolution eklendi (agent-specific → category → gradient)
+- **lor-card-maker**: unit.js / spell.js / champion.js her kart tipi ayrı component → `switch(category)` dispatch ile 4 farklı template
+
+```
+Draw() → DrawCardBase + DrawPortrait + DrawFade (shared)
+       → switch(category) → _templateDesign / _templateDev / _templateQA / _templateUtility
+       → DrawFooter + DrawBorder (shared)
+```
+
+### Template özelliği per kategori
+
+| Kategori | Özel element |
+|----------|-------------|
+| design   | Diagonal paint-stroke köşesi, sol accent bar, 2-kolon grid capability chips |
+| dev      | Terminal header bar (macOS dots + monospace), grid overlay, `// ARAÇLAR` prefix, Consolas font |
+| qa       | Diagonal warning stripe, shield arka plan motifi, checkbox-style liste, alert bar |
+| utility  | Corner bracket geometry, numbered circle capabilities |
+
+### Image resolution (2 tier — DnD cardsources.json ilhamı)
+1. `images/agents/{id}.jpg` — agent-specific portrait
+2. `images/categories/{category}.jpg` — category fallback
+3. Gradient (radial + linear) — son fallback
+
+### Batch Export
+`BatchExport()` metodu eklendi: tüm agentları sırayla render → download (lor-card-maker batch-renderer ilhamı). "⬇ Tümünü İndir" butonu HTML'e eklendi.
 
 ## Renk sistemi
 
