@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Cards</title>
+    <link rel="stylesheet" href="css/agent-cards-style.css" />
+</head>
+
+<body>
+    <div class="page-wrapper">
+
+        <!-- Header -->
+        <header class="page-header">
+            <a class="back-link" href="../index.html">← Ana Sayfa</a>
+            <h1>Agent System Prompt Cards</h1>
+            <p>Claude Code agent system promptlarını görsel kartlar olarak incele ve PNG olarak indir.</p>
+        </header>
+
+        <!-- Agent selector -->
+        <div class="controls">
+            <label for="agentSelect">Agent:</label>
+            <select id="agentSelect" class="agent-select">
+                <!-- JavaScript ile doldurulur -->
+            </select>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-wrapper">
+            <canvas id="agentCanvas" width="612" height="792"></canvas>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-row">
+            <button id="downloadBtn" class="btn btn-primary">
+                ↓ PNG İndir
+            </button>
+        </div>
+
+        <!-- Meta -->
+        <div class="meta-row">
+            <span class="meta-chip" id="agentCountChip">15 agent</span>
+            <span class="meta-chip">612 × 792 px</span>
+        </div>
+
+    </div>
+
+    <!-- jQuery (from existing dnd/js/ — no copy needed) -->
+    <script src="../dnd/js/jquery-3.4.1.min.js"></script>
+    <!-- Agent card renderer -->
+    <script src="js/agent-cards-script.js"></script>
+
+    <!-- Update UI after agent data loads -->
+    <script>
+        $(document).ready(function () {
+            // Accent rengi buton ve UI'a yansıt
+            function applyAccent(color) {
+                document.documentElement.style.setProperty('--accent', color);
+                document.getElementById('downloadBtn').style.backgroundColor = color;
+                document.getElementById('downloadBtn').style.boxShadow = `0 4px 20px ${color}55`;
+            }
+
+            // JSON yüklendikten sonra ilk agent rengini uygula
+            setTimeout(function () {
+                const count = AC.agents.length;
+                if (count > 0) {
+                    $("#agentCountChip").text(count + " agent");
+                    if (AC.currentAgent) applyAccent(AC.currentAgent.accentColor);
+                }
+            }, 700);
+
+            // Seçim değişince accent güncelle
+            $("#agentSelect").on("change", function () {
+                setTimeout(function () {
+                    if (AC.currentAgent) applyAccent(AC.currentAgent.accentColor);
+                }, 50);
+            });
+        });
+    </script>
+
+</body>
+
+</html>

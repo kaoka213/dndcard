@@ -1,0 +1,244 @@
+{
+  "agents": [
+    {
+      "id": "card-design-plan-agent",
+      "name": "Card Design Plan Agent",
+      "category": "design",
+      "emoji": "🎨",
+      "description": "Agent system prompt kartları için görsel planlama ve tasarım koordinasyonu. Pinterest araştırması, Google Imagen prompt üretimi ve repo yönetimini kapsar.",
+      "capabilities": [
+        "Pinterest referans araştırması",
+        "Google Imagen prompt üretimi",
+        "Görsel yön planlaması",
+        "Repo tasarım varlıkları yönetimi"
+      ],
+      "tools": ["WebSearch", "Write", "Edit", "Glob", "Grep", "Read"],
+      "accentColor": "#8B5CF6",
+      "gradientEnd": "#1e0a3c"
+    },
+    {
+      "id": "ui-designer",
+      "name": "UI Designer",
+      "category": "design",
+      "emoji": "✏️",
+      "description": "Flutter uygulaması için UI/UX tasarım rehberliği, widget düzeni, ekran tasarımı, renk şemaları, tipografi seçimleri ve görsel iyileştirmeler.",
+      "capabilities": [
+        "Ekran ve widget tasarımı",
+        "Renk ve tipografi sistemi",
+        "Responsive layout önerileri",
+        "Design system tutarlılığı"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep"],
+      "accentColor": "#EC4899",
+      "gradientEnd": "#3d0a25"
+    },
+    {
+      "id": "gamification-ux-advisor",
+      "name": "Gamification UX Advisor",
+      "category": "design",
+      "emoji": "🏆",
+      "description": "UI/UX elementlerine oyunlaştırma ilkeleri uygular. Puan, rozet, streak, progress bar ve sosyal ödül mekanikleri ekler.",
+      "capabilities": [
+        "Ödül döngüsü tasarımı",
+        "Rozet ve başarım sistemi",
+        "Streak ve progress mekanikleri",
+        "Sosyal engagement artırma"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep"],
+      "accentColor": "#F59E0B",
+      "gradientEnd": "#3d2200"
+    },
+    {
+      "id": "presentation-designer",
+      "name": "Presentation Designer",
+      "category": "design",
+      "emoji": "📊",
+      "description": "Profesyonel sunumlar, pitch deck'ler ve slayt destesi oluşturur. İş sunumları, eğitim içerikleri ve startup pitch'leri için yapılandırılmış görsel hikaye anlatımı.",
+      "capabilities": [
+        "Investor pitch deck oluşturma",
+        "Slide-by-slide içerik planı",
+        "Görsel hikaye anlatımı",
+        "Hedef kitleye göre uyarlama"
+      ],
+      "tools": ["Read", "Write", "WebSearch"],
+      "accentColor": "#06B6D4",
+      "gradientEnd": "#0a2830"
+    },
+    {
+      "id": "flutter-univercity-dev",
+      "name": "Flutter Univercity Dev",
+      "category": "dev",
+      "emoji": "📱",
+      "description": "UniApp Flutter frontend kod tabanında çalışır. Yeni özellikler, hata düzeltmeleri, widget'lar, ekranlar ve GetX state management entegrasyonu.",
+      "capabilities": [
+        "Feature-first mimari geliştirme",
+        "GetX state management",
+        "API entegrasyonu (Dio)",
+        "Widget ve ekran oluşturma"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+      "accentColor": "#0EA5E9",
+      "gradientEnd": "#0a1e30"
+    },
+    {
+      "id": "backend-flutter-univercity",
+      "name": "Backend Flutter Univercity",
+      "category": "dev",
+      "emoji": "⚙️",
+      "description": "UniApp'in hem Flutter frontend'i hem de Go backend'i için çalışır. Yeni özellikler, API endpoint'leri, mikroservis mantığı ve altyapı değişiklikleri.",
+      "capabilities": [
+        "Go mikroservis geliştirme",
+        "API Gateway routing",
+        "Flutter + Go full-stack",
+        "Infrastructure değişiklikleri"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+      "accentColor": "#10B981",
+      "gradientEnd": "#0a2518"
+    },
+    {
+      "id": "univercity-lead-architect",
+      "name": "Univercity Lead Architect",
+      "category": "dev",
+      "emoji": "🏛️",
+      "description": "UniApp için öncü mimari ajan. Hem okul içi hem okul arası özellikler için Flutter/Dart frontend geliştirme ve Nallagram ilhamlı UI pattern entegrasyonu.",
+      "capabilities": [
+        "Okul içi/arası özellik tasarımı",
+        "Nallagram UI pattern entegrasyonu",
+        "Özellik geliştirme koordinasyonu",
+        "Flutter mimari liderliği"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Agent"],
+      "accentColor": "#3B82F6",
+      "gradientEnd": "#0a1530"
+    },
+    {
+      "id": "bug-hunter",
+      "name": "Bug Hunter",
+      "category": "qa",
+      "emoji": "🔍",
+      "description": "UniApp projesinde hata bulur, sorunları tespit eder ve kodun doğruluğunu test eder. Hata raporları üretir ve diğer ajanların harekete geçmesini sağlar.",
+      "capabilities": [
+        "Statik kod analizi",
+        "Test çalıştırma ve analiz",
+        "Hata pattern tespiti",
+        "Bug raporu üretimi"
+      ],
+      "tools": ["Read", "Glob", "Grep", "Bash"],
+      "accentColor": "#EF4444",
+      "gradientEnd": "#3d0a0a"
+    },
+    {
+      "id": "ghost-code-cleaner",
+      "name": "Ghost Code Cleaner",
+      "category": "qa",
+      "emoji": "👻",
+      "description": "Ölü kod, kullanılmayan import'lar, referans edilmemiş değişkenler, sahipsiz dosyalar ve erişilemeyen kod bulup temizler.",
+      "capabilities": [
+        "Ölü kod tespiti",
+        "Kullanılmayan import temizleme",
+        "Sahipsiz dosya tespiti",
+        "Deprecated fonksiyon kaldırma"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+      "accentColor": "#A78BFA",
+      "gradientEnd": "#1a0a3c"
+    },
+    {
+      "id": "ux-consistency-auditor",
+      "name": "UX Consistency Auditor",
+      "category": "qa",
+      "emoji": "🔬",
+      "description": "UniApp UI/UX tutarlılığını kullanıcı davranış haritalarına göre değerlendirir. Ekran değişikliklerini ve interaction pattern uyumunu inceler.",
+      "capabilities": [
+        "UX tutarlılık denetimi",
+        "Davranış haritası karşılaştırması",
+        "Interaction pattern analizi",
+        "Geliştirici UX rehberliği"
+      ],
+      "tools": ["Read", "Glob", "Grep"],
+      "accentColor": "#F97316",
+      "gradientEnd": "#3d1500"
+    },
+    {
+      "id": "general-purpose",
+      "name": "General Purpose",
+      "category": "utility",
+      "emoji": "🤖",
+      "description": "Karmaşık sorular araştırmak, kod aramak ve çok adımlı görevler yürütmek için genel amaçlı ajan. Birden fazla deneme gerektiren aramalarda kullanılır.",
+      "capabilities": [
+        "Kod tabanı araştırması",
+        "Çok adımlı görev yürütme",
+        "Bağlam toplama ve sentez",
+        "Genel problem çözme"
+      ],
+      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebSearch"],
+      "accentColor": "#64748B",
+      "gradientEnd": "#0f1520"
+    },
+    {
+      "id": "claude-code-guide",
+      "name": "Claude Code Guide",
+      "category": "utility",
+      "emoji": "📖",
+      "description": "Claude Code CLI özellikleri, hook'lar, slash komutları, MCP sunucuları, ayarlar ve IDE entegrasyonları hakkında sorular için rehber ajan.",
+      "capabilities": [
+        "Claude Code CLI rehberliği",
+        "Hook ve komut açıklaması",
+        "MCP sunucu yapılandırması",
+        "Claude API kullanım rehberi"
+      ],
+      "tools": ["Glob", "Grep", "Read", "WebFetch", "WebSearch"],
+      "accentColor": "#F8CA00",
+      "gradientEnd": "#2a2000"
+    },
+    {
+      "id": "plan",
+      "name": "Plan Agent",
+      "category": "utility",
+      "emoji": "📐",
+      "description": "Uygulama stratejisi tasarlamak için yazılım mimarı ajanı. Adım adım planlar oluşturur, kritik dosyaları tanımlar ve mimari değiş tokuşları değerlendirir.",
+      "capabilities": [
+        "Uygulama stratejisi tasarımı",
+        "Kritik dosya tespiti",
+        "Mimari değiş tokuş analizi",
+        "Adım adım plan oluşturma"
+      ],
+      "tools": ["Read", "Glob", "Grep"],
+      "accentColor": "#22D3EE",
+      "gradientEnd": "#0a2530"
+    },
+    {
+      "id": "explore",
+      "name": "Explore Agent",
+      "category": "utility",
+      "emoji": "🗺️",
+      "description": "Dosyaları pattern ile bulmak, sembol veya anahtar kelime aramak için hızlı salt-okunur arama ajanı. Kod incelemesi veya çapraz-dosya analizi için kullanılmaz.",
+      "capabilities": [
+        "Hızlı dosya pattern araması",
+        "Sembol ve keyword arama",
+        "Referans tespiti",
+        "Hedefli kod konumlama"
+      ],
+      "tools": ["Glob", "Grep", "Read"],
+      "accentColor": "#34D399",
+      "gradientEnd": "#0a2515"
+    },
+    {
+      "id": "claude",
+      "name": "Claude (Genel)",
+      "category": "utility",
+      "emoji": "✨",
+      "description": "Daha spesifik bir ajana uymayan görevler için catch-all ajan. Herhangi bir ajan adı yazılmadığında FleetView'in varsayılanı.",
+      "capabilities": [
+        "Genel amaçlı yardım",
+        "Her türlü görev",
+        "Varsayılan fallback",
+        "Esnek kapsam"
+      ],
+      "tools": ["*"],
+      "accentColor": "#94A3B8",
+      "gradientEnd": "#111827"
+    }
+  ]
+}

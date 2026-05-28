@@ -1,0 +1,1 @@
+- [Agent Cards Modülü](project-agent-cards.md) — DNDCard'a eklenen agent kart görselleştirme modülünün tüm tasarım ve implementasyon kararları
