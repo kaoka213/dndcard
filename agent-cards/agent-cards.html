@@ -31,6 +31,16 @@
             <canvas id="agentCanvas" width="612" height="792"></canvas>
         </div>
 
+        <!-- Variation picker (görsel varyasyonlar varsa gösterilir) -->
+        <div class="variation-row" id="variationRow" style="display:none;">
+            <span class="variation-label">Varyasyon:</span>
+            <button class="var-btn active" data-v="0">Ana</button>
+            <button class="var-btn" data-v="1">v1</button>
+            <button class="var-btn" data-v="2">v2</button>
+            <button class="var-btn" data-v="3">v3</button>
+            <button id="setMainBtn" class="btn btn-secondary btn-sm">← Bu varyasyonu ana yap</button>
+        </div>
+
         <!-- Actions -->
         <div class="action-row">
             <button id="downloadBtn" class="btn btn-primary">
@@ -51,30 +61,95 @@
     <!-- Agent card renderer -->
     <script src="js/agent-cards-script.js"></script>
 
-    <!-- Update UI after agent data loads -->
     <script>
+        // Hangi varyasyonların var olduğunu kontrol et
+        function checkVariations(agentId) {
+            const row = document.getElementById("variationRow");
+            const btns = document.querySelectorAll(".var-btn");
+            let found = 0;
+
+            // Paralel img probe: her varyasyon dosyasının var olup olmadığını test et
+            const checks = [1, 2, 3].map(v => new Promise(resolve => {
+                const img = new Image();
+                img.onload  = () => resolve(v);
+                img.onerror = () => resolve(null);
+                img.src = `images/agents/${agentId}-v${v}.jpg?t=${Date.now()}`;
+            }));
+
+            Promise.all(checks).then(results => {
+                const existing = results.filter(v => v !== null);
+                if (existing.length > 0) {
+                    row.style.display = "flex";
+                    btns.forEach(b => {
+                        const v = parseInt(b.dataset.v);
+                        if (v === 0) { b.style.display = ""; b.classList.add("active"); return; }
+                        b.style.display = existing.includes(v) ? "" : "none";
+                        b.classList.remove("active");
+                    });
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
         $(document).ready(function () {
-            // Accent rengi buton ve UI'a yansıt
             function applyAccent(color) {
                 document.documentElement.style.setProperty('--accent', color);
-                document.getElementById('downloadBtn').style.backgroundColor = color;
-                document.getElementById('downloadBtn').style.boxShadow = `0 4px 20px ${color}55`;
+                const btn = document.getElementById('downloadBtn');
+                btn.style.backgroundColor = color;
+                btn.style.boxShadow = `0 4px 20px ${color}55`;
             }
 
-            // JSON yüklendikten sonra ilk agent rengini uygula
             setTimeout(function () {
-                const count = AC.agents.length;
-                if (count > 0) {
-                    $("#agentCountChip").text(count + " agent");
-                    if (AC.currentAgent) applyAccent(AC.currentAgent.accentColor);
+                if (AC.currentAgent) {
+                    applyAccent(AC.currentAgent.accentColor);
+                    checkVariations(AC.currentAgent.id);
                 }
-            }, 700);
+                $("#agentCountChip").text(AC.agents.length + " agent");
+            }, 750);
 
-            // Seçim değişince accent güncelle
             $("#agentSelect").on("change", function () {
                 setTimeout(function () {
-                    if (AC.currentAgent) applyAccent(AC.currentAgent.accentColor);
-                }, 50);
+                    if (AC.currentAgent) {
+                        applyAccent(AC.currentAgent.accentColor);
+                        checkVariations(AC.currentAgent.id);
+                    }
+                }, 60);
+            });
+
+            // Varyasyon butonları
+            $(document).on("click", ".var-btn", function () {
+                if (!AC.currentAgent) return;
+                document.querySelectorAll(".var-btn").forEach(b => b.classList.remove("active"));
+                this.classList.add("active");
+
+                const v = parseInt(this.dataset.v);
+                const id = AC.currentAgent.id;
+
+                if (v === 0) {
+                    // Ana görsel
+                    AC.bgImages[id] = undefined; // cache temizle, yeniden yükle
+                    delete AC.bgImages[id];
+                    AC.Make(id);
+                } else {
+                    // Varyasyon görsel
+                    const img = new Image();
+                    img.onload = () => {
+                        AC.bgImages[id] = img;
+                        AC.Draw(AC.currentAgent, img);
+                    };
+                    img.src = `images/agents/${id}-v${v}.jpg`;
+                }
+            });
+
+            // "Bu varyasyonu ana yap" — aktif varyasyonu {id}.jpg olarak kopyalamak için
+            // (Node.js script olmadan yapılamaz, kullanıcıya bilgi ver)
+            $("#setMainBtn").on("click", function () {
+                const activeBtn = document.querySelector(".var-btn.active");
+                if (!activeBtn || parseInt(activeBtn.dataset.v) === 0) return;
+                const v = activeBtn.dataset.v;
+                const id = AC.currentAgent.id;
+                alert(`Ana görsel olarak kaydetmek için terminalde şunu çalıştır:\n\ncopy agent-cards\\images\\agents\\${id}-v${v}.jpg agent-cards\\images\\agents\\${id}.jpg`);
             });
         });
     </script>
