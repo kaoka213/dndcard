@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Prompt Browser</title>
+    <link rel="stylesheet" href="css/agent-cards-style.css" />
+    <link rel="stylesheet" href="css/browse-style.css" />
+</head>
+
+<body>
+    <div class="browse-wrapper">
+
+        <!-- Header -->
+        <header class="page-header" style="text-align:left; margin-bottom:28px;">
+            <a class="back-link" href="../index.html">← Ana Sayfa</a>
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:12px;">
+                <div>
+                    <h1 style="margin-bottom:4px;">Agent Prompt Browser</h1>
+                    <p>System prompt kütüphanesi — arayın, filtreleyin, kopyalayın.</p>
+                </div>
+                <span class="meta-chip" id="totalBadge" style="margin-left:auto;">Yükleniyor…</span>
+                <a href="agent-cards.html" class="btn btn-secondary" style="text-decoration:none; font-size:13px;">
+                    🃏 Kart Görünümü
+                </a>
+            </div>
+        </header>
+
+        <!-- Main layout -->
+        <div class="browse-layout">
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+
+                <!-- Search -->
+                <div class="sidebar-section">
+                    <h3>Arama</h3>
+                    <div class="search-wrap">
+                        <input type="text" id="searchInput" class="search-input"
+                               placeholder="Agent adı, açıklama, etiket…" autocomplete="off" />
+                    </div>
+                </div>
+
+                <!-- Source filter -->
+                <div class="sidebar-section">
+                    <h3>Kaynak</h3>
+                    <div id="sourceFilters"></div>
+                </div>
+
+                <!-- Category filter -->
+                <div class="sidebar-section">
+                    <h3>Kategori</h3>
+                    <div id="categoryFilters"></div>
+                </div>
+
+                <!-- Prompt length filter -->
+                <div class="sidebar-section">
+                    <h3>Prompt Uzunluğu</h3>
+                    <div id="lengthFilters">
+                        <div class="filter-option" data-filter="length" data-value="short">
+                            <span class="filter-dot"></span>
+                            <span>Kısa (&lt;200 karakter)</span>
+                        </div>
+                        <div class="filter-option" data-filter="length" data-value="medium">
+                            <span class="filter-dot"></span>
+                            <span>Orta (200–2000)</span>
+                        </div>
+                        <div class="filter-option" data-filter="length" data-value="long">
+                            <span class="filter-dot"></span>
+                            <span>Uzun (&gt;2000)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reset -->
+                <button id="resetBtn" class="btn-reset">↺ Filtreleri Sıfırla</button>
+
+            </aside>
+
+            <!-- Results -->
+            <main>
+                <div class="results-header">
+                    <span class="results-count" id="resultsCount">Yükleniyor…</span>
+                    <select id="sortSelect" class="sort-select">
+                        <option value="">Varsayılan sıra</option>
+                        <option value="name-az">İsim (A → Z)</option>
+                        <option value="prompt-long">En uzun prompt</option>
+                        <option value="prompt-short">En kısa prompt</option>
+                    </select>
+                </div>
+
+                <div class="card-grid" id="cardGrid">
+                    <div class="loading-state">⏳ Yükleniyor…</div>
+                </div>
+
+                <div class="pagination" id="pagination"></div>
+            </main>
+
+        </div>
+    </div>
+
+    <!-- ─── Prompt Modal ─────────────────────────────────────────────── -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-emoji" id="modalEmoji">🤖</span>
+                <div class="modal-meta">
+                    <div class="modal-name" id="modalName"></div>
+                    <div class="modal-source" id="modalSource"></div>
+                    <div class="modal-tags" id="modalTags"></div>
+                </div>
+                <button class="modal-close" id="modalClose" title="Kapat (Esc)">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-desc" id="modalDesc"></div>
+                <div class="prompt-label">SYSTEM PROMPT</div>
+                <pre class="prompt-text" id="modalPrompt"></pre>
+            </div>
+            <div class="modal-footer">
+                <button id="copyBtn" class="btn btn-primary" style="font-size:13px; padding:8px 18px;">
+                    📋 Kopyala
+                </button>
+                <button id="cardBtn" class="btn btn-secondary" style="font-size:13px; padding:8px 18px;">
+                    🃏 Kartı Oluştur
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy feedback toast -->
+    <div class="copy-feedback" id="copyFeedback">✓ Panoya kopyalandı</div>
+
+    <script src="js/browse-script.js"></script>
+
+</body>
+
+</html>

@@ -109,18 +109,23 @@ const AC = {
     },
 
     // ─── Draw — dispatches to category template ───────────────────────────
-    // Inspired by lor-card-maker: each card *type* has its own render component
-    // (unit.js, spell.js, champion.js). Here: category → template function.
+    // Architecture mirrors lor-card-maker: shared base → per-type template → shared top
+    // LoR layer order: art → art-blur → frame overlay → content → stats
+    // Our order: base → portrait(polygon+blur) → fade → portrait-overlays → template → bottom-gems → border
     Draw: function (agent, img) {
         const { ctx, W, H } = this;
         ctx.clearRect(0, 0, W, H);
 
-        // Shared layers: base + portrait + fade (same for all templates)
+        // ── 1. Shared base layers ─────────────────────────────────────────────
         this.DrawCardBase(agent);
-        this.DrawPortrait(agent, img);
-        this.DrawFade(agent);
+        this.DrawPortrait(agent, img);  // Pattern 1+2: polygon clip + double-layer blur
+        this.DrawFade(agent);           // extra depth gradient on top of blur
 
-        // Category-specific template from here on
+        // ── 2. Portrait overlays — LoR-style elements ON the portrait art ────
+        this.DrawManaGem(agent);        // Pattern 3: tool count gem, top-left corner
+        this.DrawRegionStack(agent);    // Pattern 6: tool icon stack, right portrait edge
+
+        // ── 3. Category template — name, description, capabilities, tools ────
         switch (agent.category) {
             case "design":  this._templateDesign(agent);  break;
             case "dev":     this._templateDev(agent);     break;
@@ -129,7 +134,10 @@ const AC = {
             default:        this._templateUtility(agent); break;
         }
 
+        // ── 4. Card bottom — drawn LAST so they overlay the footer zone ───────
         this.DrawFooter(agent);
+        this.DrawBottomStats(agent);    // Pattern 4: corner stat circles (LoR power/health)
+        this.DrawRarityGem(agent);      // Pattern 7: center category diamond gem
         this.DrawBorder(agent);
     },
 
@@ -157,39 +165,46 @@ const AC = {
         // Name + badge (left-aligned, overlaid on portrait)
         this.DrawNameOverlay(agent);
 
+        // ── Measure content → distribute space (DnDGen bottom-justify pattern) ──
+        const maxW = W - PAD * 2;
+        const m    = this._measureContent(agent, ctx, maxW);
+        const gap  = this._sectionGap(agent, ctx, m.descH + m.capGridH + m.toolsH);
+
         // Lower text section
-        let y = IMG_H + 16;
+        let y = IMG_H + 16 + gap * 0.25; // small top breathing room
         y = this.DrawDescription(agent, y);
+        y += gap;
 
         // Capabilities — 2-column grid cards (like lor-card-maker keyword chips)
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
+        ctx.font = `700 9px ${this.FONT_FAMILY}`;
         ctx.fillStyle = agent.accentColor;
         ctx.textAlign = "left";
         ctx.fillText("YETENEKLER", PAD, y);
         y += 14;
 
-        const colW = (W - PAD * 2 - 8) / 2;
+        const CELL_H = 44; // taller cells for better fill
+        const colW   = (W - PAD * 2 - 8) / 2;
         agent.capabilities.forEach((cap, i) => {
             const col = i % 2;
             const row = Math.floor(i / 2);
             const cx  = PAD + col * (colW + 8);
-            const cy  = y + row * 30;
+            const cy  = y + row * CELL_H;
 
             ctx.fillStyle   = "rgba(255,255,255,0.06)";
-            this.RoundRect(ctx, cx, cy - 12, colW, 24, 6); ctx.fill();
+            this.RoundRect(ctx, cx, cy - CELL_H * 0.5, colW, CELL_H - 4, 7); ctx.fill();
             ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.28);
             ctx.lineWidth   = 1;
-            this.RoundRect(ctx, cx, cy - 12, colW, 24, 6); ctx.stroke();
+            this.RoundRect(ctx, cx, cy - CELL_H * 0.5, colW, CELL_H - 4, 7); ctx.stroke();
 
-            ctx.font = `11px ${this.FONT_FAMILY}`;
+            ctx.font = `12px ${this.FONT_FAMILY}`;
             ctx.fillStyle = this.COLORS.white;
             ctx.textAlign = "center";
-            const truncated = this._truncate(ctx, cap, colW - 14);
-            ctx.fillText(truncated, cx + colW / 2, cy + 3);
+            const truncated = this._truncate(ctx, cap, colW - 16);
+            ctx.fillText(truncated, cx + colW / 2, cy + 4);
         });
 
         const capRows = Math.ceil(agent.capabilities.length / 2);
-        y += capRows * 30 + 14;
+        y += capRows * CELL_H + gap;
         this.DrawTools(agent, y);
     },
 
@@ -234,29 +249,35 @@ const AC = {
         // Name + badge
         this.DrawNameOverlay(agent);
 
+        // ── Measure → dynamic gap ──
+        const maxW = W - PAD * 2;
+        const m    = this._measureContent(agent, ctx, maxW);
+        const gap  = this._sectionGap(agent, ctx, m.descH + m.capListH + m.toolsH);
+
         // Lower section
-        let y = IMG_H + 16;
+        let y = IMG_H + 16 + gap * 0.25;
         y = this.DrawDescription(agent, y);
+        y += gap;
 
         // Capabilities — code-block style with monospace prefix
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
+        ctx.font = `700 9px ${this.FONT_FAMILY}`;
         ctx.fillStyle = agent.accentColor;
         ctx.textAlign = "left";
         ctx.fillText("// YETENEKLER", PAD, y);
         y += 14;
 
         agent.capabilities.forEach(cap => {
-            ctx.font = `11px ${this.MONO_FAMILY}`;
+            ctx.font = `12px ${this.MONO_FAMILY}`;
             ctx.fillStyle = this.HexToRgba(agent.accentColor, 0.65);
             ctx.fillText("  › ", PAD, y);
             const prefW = ctx.measureText("  › ").width;
-            ctx.font = `11px ${this.FONT_FAMILY}`;
+            ctx.font = `12px ${this.FONT_FAMILY}`;
             ctx.fillStyle = this.COLORS.white;
             ctx.fillText(cap, PAD + prefW, y);
-            y += 20;
+            y += 25;
         });
 
-        y += 8;
+        y += gap;
         this.DrawTools(agent, y, true); // monospace tool chips
     },
 
@@ -294,11 +315,19 @@ const AC = {
 
         this.DrawNameOverlay(agent);
 
-        let y = IMG_H + 16;
+        // ── Measure → dynamic gap ──
+        const maxW    = W - PAD * 2;
+        const m       = this._measureContent(agent, ctx, maxW);
+        const alertH  = 28;
+        const totalH  = m.descH + m.capListH + alertH + 14 + m.toolsH;
+        const gap     = this._sectionGap(agent, ctx, totalH);
+
+        let y = IMG_H + 16 + gap * 0.25;
         y = this.DrawDescription(agent, y);
+        y += gap;
 
         // Capabilities — checklist with checkbox style
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
+        ctx.font = `700 9px ${this.FONT_FAMILY}`;
         ctx.fillStyle = agent.accentColor;
         ctx.textAlign = "left";
         ctx.fillText("KONTROL LİSTESİ", PAD, y);
@@ -307,29 +336,28 @@ const AC = {
         agent.capabilities.forEach(cap => {
             ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.65);
             ctx.lineWidth   = 1;
-            ctx.strokeRect(PAD, y - 11, 11, 11);
+            ctx.strokeRect(PAD, y - 12, 12, 12);
             ctx.font = `9px ${this.FONT_FAMILY}`;
             ctx.fillStyle = agent.accentColor;
             ctx.fillText("✓", PAD + 1.5, y - 0.5);
-            ctx.font = `11px ${this.FONT_FAMILY}`;
+            ctx.font = `12px ${this.FONT_FAMILY}`;
             ctx.fillStyle = this.COLORS.white;
-            ctx.fillText(cap, PAD + 18, y);
-            y += 21;
+            ctx.fillText(cap, PAD + 20, y);
+            y += 25;
         });
 
         // Alert bar
-        y += 4;
-        const alertH = 22;
+        y += gap * 0.5;
         ctx.fillStyle   = this.HexToRgba(agent.accentColor, 0.10);
         ctx.fillRect(PAD, y, W - PAD * 2, alertH);
         ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.28);
         ctx.lineWidth   = 1;
         ctx.strokeRect(PAD, y, W - PAD * 2, alertH);
-        ctx.font = `9px ${this.FONT_FAMILY}`;
+        ctx.font = `10px ${this.FONT_FAMILY}`;
         ctx.fillStyle = this.HexToRgba(agent.accentColor, 0.8);
         ctx.textAlign = "center";
         ctx.fillText("⚠  Kalite güvencesi aktif", W / 2, y + alertH / 2 + 3.5);
-        y += alertH + 10;
+        y += alertH + gap * 0.5;
 
         this.DrawTools(agent, y);
     },
@@ -349,11 +377,17 @@ const AC = {
 
         this.DrawNameOverlay(agent);
 
-        let y = IMG_H + 16;
+        // ── Measure → dynamic gap ──
+        const maxW = W - PAD * 2;
+        const m    = this._measureContent(agent, ctx, maxW);
+        const gap  = this._sectionGap(agent, ctx, m.descH + m.capListH + m.toolsH);
+
+        let y = IMG_H + 16 + gap * 0.25;
         y = this.DrawDescription(agent, y);
+        y += gap;
 
         // Capabilities — numbered circles
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
+        ctx.font = `700 9px ${this.FONT_FAMILY}`;
         ctx.fillStyle = agent.accentColor;
         ctx.textAlign = "left";
         ctx.fillText("YETENEKLER", PAD, y);
@@ -361,24 +395,24 @@ const AC = {
 
         agent.capabilities.forEach((cap, i) => {
             ctx.beginPath();
-            ctx.arc(PAD + 7, y - 4, 7, 0, Math.PI * 2);
+            ctx.arc(PAD + 8, y - 5, 8, 0, Math.PI * 2);
             ctx.fillStyle   = this.HexToRgba(agent.accentColor, 0.20); ctx.fill();
             ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.45);
             ctx.lineWidth   = 1; ctx.stroke();
 
-            ctx.font = `600 8px ${this.FONT_FAMILY}`;
+            ctx.font = `600 9px ${this.FONT_FAMILY}`;
             ctx.fillStyle = agent.accentColor;
             ctx.textAlign = "center";
-            ctx.fillText(String(i + 1), PAD + 7, y - 0.5);
+            ctx.fillText(String(i + 1), PAD + 8, y - 0.5);
 
-            ctx.font = `11px ${this.FONT_FAMILY}`;
+            ctx.font = `12px ${this.FONT_FAMILY}`;
             ctx.fillStyle = this.COLORS.white;
             ctx.textAlign = "left";
-            ctx.fillText(cap, PAD + 20, y);
-            y += 21;
+            ctx.fillText(cap, PAD + 22, y);
+            y += 25;
         });
 
-        y += 8;
+        y += gap;
         this.DrawTools(agent, y);
     },
 
@@ -431,26 +465,26 @@ const AC = {
         }
     },
 
-    // ─── Light vignette on portrait ──────────────────────────────────────
+    // ─── Soft vignette on portrait — sadece kenar yumuşatma ─────────────
     DrawPortraitVignette: function (agent) {
         const { ctx, W, IMG_H } = this;
 
-        // Left & right darkening
-        const lG = ctx.createLinearGradient(0, 0, 60, 0);
-        lG.addColorStop(0, "rgba(0,0,0,0.45)");
+        // Sol/sağ — daha geniş ve daha yumuşak geçiş
+        const lG = ctx.createLinearGradient(0, 0, 80, 0);
+        lG.addColorStop(0, "rgba(0,0,0,0.30)");
         lG.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = lG; ctx.fillRect(0, 0, 60, IMG_H);
+        ctx.fillStyle = lG; ctx.fillRect(0, 0, 80, IMG_H);
 
-        const rG = ctx.createLinearGradient(W, 0, W - 60, 0);
-        rG.addColorStop(0, "rgba(0,0,0,0.45)");
+        const rG = ctx.createLinearGradient(W, 0, W - 80, 0);
+        rG.addColorStop(0, "rgba(0,0,0,0.30)");
         rG.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = rG; ctx.fillRect(W - 60, 0, 60, IMG_H);
+        ctx.fillStyle = rG; ctx.fillRect(W - 80, 0, 80, IMG_H);
 
-        // Top darkening
-        const tG = ctx.createLinearGradient(0, 0, 0, 50);
-        tG.addColorStop(0, "rgba(0,0,0,0.5)");
+        // Üst — sadece çok hafif, keskin çizgi bırakmaz
+        const tG = ctx.createLinearGradient(0, 0, 0, 70);
+        tG.addColorStop(0, "rgba(0,0,0,0.35)");
         tG.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = tG; ctx.fillRect(0, 0, W, 50);
+        ctx.fillStyle = tG; ctx.fillRect(0, 0, W, 70);
     },
 
     // ─── Gradient fade — image dissolves into dark section ───────────────
@@ -521,7 +555,7 @@ const AC = {
         return topY + bH;
     },
 
-    // ─── Description ─────────────────────────────────────────────────────
+    // ─── Description — 13px, lineH 24 (DnDGen: 25px lineHeight) ─────────
     DrawDescription: function (agent, yPos) {
         const { ctx, W, PAD } = this;
         const maxW = W - PAD * 2;
@@ -529,8 +563,43 @@ const AC = {
         ctx.fillStyle = this.COLORS.textMuted;
         ctx.textAlign = "left";
         const lines = this.WrapText(ctx, agent.description, maxW);
-        lines.forEach(l => { ctx.fillText(l, PAD, yPos); yPos += 19; });
-        return yPos + 14;
+        lines.forEach(l => { ctx.fillText(l, PAD, yPos); yPos += 24; });
+        return yPos + 8; // tighter post-description gap; templates add their own gap
+    },
+
+    // ─── Content measurement (DnDGen pattern: measure-then-draw) ─────────
+    // Returns pixel heights for each section so templates can distribute
+    // remaining space evenly — adapted from DnDGen's SetPersonalityCard
+    // bottom-justify algorithm: yPos += lineHeight * (lineCheck - usedLines)
+    _measureContent: function (agent, ctx, maxW) {
+        const DESC_FONT = 13, LINE_H = 24;
+        const LABEL_H   = 23; // 9px bold label + 14px below gap
+        const CHIP_H    = 28, CHIP_GAP = 6;
+
+        // Description
+        ctx.font = `${DESC_FONT}px ${this.FONT_FAMILY}`;
+        const descLines = this.WrapText(ctx, agent.description, maxW);
+        const descH = descLines.length * LINE_H + 8;
+
+        // Tools chips (rough estimate — actual render may vary by 1 row)
+        const chipW_avg   = 72;
+        const chipsPerRow = Math.max(1, Math.floor(maxW / (chipW_avg + CHIP_GAP)));
+        const toolCount   = (agent.tools.length === 1 && agent.tools[0] === "*") ? 1 : agent.tools.length;
+        const toolRows    = Math.ceil(toolCount / chipsPerRow);
+        const toolsH      = LABEL_H + toolRows * (CHIP_H + CHIP_GAP);
+
+        // Capabilities
+        const capGridH = LABEL_H + Math.ceil(agent.capabilities.length / 2) * 44; // design 2-col
+        const capListH = LABEL_H + agent.capabilities.length * 25;                 // dev/qa/utility
+
+        return { descH, toolsH, capGridH, capListH, LABEL_H };
+    },
+
+    // Compute dynamic gap between sections (clamped 8–40px)
+    _sectionGap: function (agent, ctx, contentH) {
+        const available = (this.H - 38) - (this.IMG_H + 16); // 368px
+        const extra = Math.max(0, available - contentH);
+        return Math.min(40, Math.max(8, extra / 3));
     },
 
     // ─── Capabilities ────────────────────────────────────────────────────

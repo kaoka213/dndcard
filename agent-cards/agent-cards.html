@@ -61,6 +61,27 @@
     <!-- Agent card renderer -->
     <script src="js/agent-cards-script.js"></script>
 
+    <!-- LoR patterns — 5 partial files, all merged into AC before Init() fires -->
+    <!-- Pattern 1+2: polygon clip art + double-layer blur portrait -->
+    <script src="js/partials/art-blur-polygon.js"></script>
+    <!-- Pattern 5: LoR 3-part keyword chip tool badges -->
+    <script src="js/partials/keyword-chips.js"></script>
+    <!-- Pattern 3: LoR mana gem → tool count (top-left corner) -->
+    <script src="js/partials/mana-gem.js"></script>
+    <!-- Pattern 4: LoR power/health corners → capability + tool count -->
+    <script src="js/partials/bottom-stats.js"></script>
+    <!-- Pattern 6+7+8: region icon stack + rarity gem + UPPERCASE name -->
+    <script src="js/partials/visual-elements.js"></script>
+
+    <script>
+        // Merge all 5 partials into AC synchronously (before $.ready / AC.Init fires)
+        Object.assign(AC, PARTIAL_ArtBlurPolygon);   // DrawPortrait, DrawPortraitVignette
+        Object.assign(AC, PARTIAL_KeywordChips);      // DrawTools (3-part chip)
+        Object.assign(AC, PARTIAL_ManaGem);           // DrawManaGem
+        Object.assign(AC, PARTIAL_BottomStats);       // DrawBottomStats + helpers
+        Object.assign(AC, PARTIAL_VisualElements);    // DrawRegionStack, DrawRarityGem, DrawNameOverlay
+    </script>
+
     <script>
         // Hangi varyasyonların var olduğunu kontrol et
         function checkVariations(agentId) {
@@ -106,6 +127,16 @@
                     checkVariations(AC.currentAgent.id);
                 }
                 $("#agentCountChip").text(AC.agents.length + " agent");
+
+                // URL param: ?agent=some-id → open that agent directly
+                const urlParam = new URLSearchParams(window.location.search).get('agent');
+                if (urlParam) {
+                    const found = AC.agents.find(a => a.id === urlParam);
+                    if (found) {
+                        AC.Make(found.id);
+                        applyAccent(found.accentColor);
+                    }
+                }
             }, 750);
 
             $("#agentSelect").on("change", function () {
