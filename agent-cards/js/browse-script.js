@@ -149,24 +149,33 @@ const Browse = {
     cardHTML(agent) {
         const catLabels = { design:'Tasarım', dev:'Geliştirme', qa:'QA', utility:'Yardımcı' };
         const badge   = catLabels[agent.category] || agent.category;
-        const tags    = (agent.tags || []).slice(0, 3);
-        const src     = (agent.source_repo || '').split('/').pop();
+        const caps    = (agent.capabilities || []).slice(0, 3);
+        const src     = this.esc(agent.sigLabel || (agent.source_repo || '').split('/').pop() || '');
         const accent  = agent.accentColor || '#64748B';
-        return `<div class="mini-card" data-id="${this.esc(agent.id)}" style="--card-accent:${accent}">
-            <div class="mini-card-header">
+        const gradEnd = agent.gradientEnd || '#0d1018';
+        const id      = this.esc(agent.id);
+
+        // Premium mini-card: art strip (image or procedural gradient + emoji) on top,
+        // text body below — mirrors the full 612×792 canvas card aesthetic.
+        return `<article class="mini-card" data-id="${id}" style="--card-accent:${accent};--card-grad-end:${gradEnd}">
+            <div class="mini-card-art">
+                <img class="mini-card-img" src="images/agents/${id}.jpg" alt="" loading="lazy"
+                     onerror="this.classList.add('img-missing')">
                 <span class="mini-card-emoji">${agent.emoji || '🤖'}</span>
-                <span class="mini-card-badge">${badge}</span>
+                <span class="mini-card-badge">${this.esc(badge)}</span>
             </div>
-            <div class="mini-card-name">${this.esc(agent.name)}</div>
-            ${agent.description ? `<div class="mini-card-desc">${this.esc(agent.description)}</div>` : ''}
-            <div class="mini-card-tags">
-                ${tags.map(t => `<span class="mini-tag">${this.esc(t)}</span>`).join('')}
+            <div class="mini-card-body">
+                <div class="mini-card-name">${this.esc(agent.name)}</div>
+                ${agent.description ? `<div class="mini-card-desc">${this.esc(agent.description)}</div>` : ''}
+                ${caps.length ? `<div class="mini-card-caps">
+                    ${caps.map(c => `<span class="mini-cap">${this.esc(c)}</span>`).join('')}
+                </div>` : ''}
+                <div class="mini-card-footer">
+                    <span class="mini-card-source">${src}</span>
+                    <button class="mini-card-btn">Kartı Aç ↗</button>
+                </div>
             </div>
-            <div class="mini-card-footer">
-                <span class="mini-card-source">${this.esc(src)}</span>
-                <button class="mini-card-btn">Görüntüle ↗</button>
-            </div>
-        </div>`;
+        </article>`;
     },
 
     // ─── Pagination ──────────────────────────────────────────────────────
@@ -239,9 +248,54 @@ const Browse = {
         });
     },
 
-    openCardView() {
+    async openCardView() {
         if (!this.activeModal) return;
-        window.open(`agent-cards.html?agent=${encodeURIComponent(this.activeModal.id)}`, '_blank');
+        const id  = this.activeModal.id;
+        const btn = document.getElementById('cardBtn');
+        if (!btn) return;
+
+        const originalLabel = btn.innerHTML;
+        btn.disabled  = true;
+        btn.innerHTML = '✨ Görsel hazırlanıyor… (5-15 sn)';
+
+        try {
+            // Trigger on-demand Imagen generation (cached if previously made)
+            const r = await fetch(`/api/generate-card?id=${encodeURIComponent(id)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ id })
+            });
+            const data = await r.json().catch(() => ({}));
+
+            if (!r.ok || !data.success) {
+                // Fall back: open card view anyway, will render with gradient fallback
+                console.warn('Image generation failed, opening with fallback:', data.error);
+                btn.innerHTML = '⚠ Görselsiz açılıyor…';
+                setTimeout(() => {
+                    window.open(`agent-cards.html?agent=${encodeURIComponent(id)}`, '_blank');
+                    btn.disabled  = false;
+                    btn.innerHTML = originalLabel;
+                }, 500);
+                return;
+            }
+
+            // Success → open card view in new tab (image is on disk now)
+            const note = data.cached ? '(cached)' : `(${data.attempts || 1} attempt)`;
+            btn.innerHTML = `✅ Hazır ${note}`;
+            setTimeout(() => {
+                window.open(`agent-cards.html?agent=${encodeURIComponent(id)}`, '_blank');
+                btn.disabled  = false;
+                btn.innerHTML = originalLabel;
+            }, 400);
+        } catch (e) {
+            console.error('Card generation failed:', e);
+            btn.innerHTML = '❌ Hata — fallback açılıyor';
+            setTimeout(() => {
+                window.open(`agent-cards.html?agent=${encodeURIComponent(id)}`, '_blank');
+                btn.disabled  = false;
+                btn.innerHTML = originalLabel;
+            }, 800);
+        }
     },
 
     // ─── Loading ─────────────────────────────────────────────────────────

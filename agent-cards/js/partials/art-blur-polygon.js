@@ -67,12 +67,8 @@ const PARTIAL_ArtBlurPolygon = {
             const { offX, offY, dW, dH } = coverFit(img);
             ctx.drawImage(img, offX, offY, dW, dH);
         } else {
-            // Gradient fallback — rich accent-tinted panel
-            const g = ctx.createLinearGradient(0, 0, 0, IMG_H);
-            g.addColorStop(0, this.HexToRgba(agent.accentColor, 0.55));
-            g.addColorStop(1, this.HexToRgba(agent.accentColor, 0.12));
-            ctx.fillStyle = g;
-            ctx.fillRect(0, 0, W, IMG_H);
+            // Procedural fallback — accent→gradientEnd panel + category motif
+            this.DrawProceduralBackdrop(agent);
 
             // Large centred emoji as the "portrait figure"
             ctx.font        = `96px ${this.FONT_FAMILY}`;
@@ -170,6 +166,68 @@ const PARTIAL_ArtBlurPolygon = {
 
         // Finally, apply the vignette (edge darkening + accent bottom glow)
         this.DrawPortraitVignette(agent);
+    },
+
+    // ─── Procedural backdrop (no-image fallback) ────────────────────────────
+    // Draws a two-stop accent→gradientEnd diagonal gradient, a soft radial
+    // accent bloom, and a faint category-specific geometric motif so that
+    // image-less cards (the vast majority of the scraped pool) still feel
+    // designed and colour-coherent. Called inside the PASS-1 polygon clip.
+    DrawProceduralBackdrop: function (agent) {
+        const { ctx, W, IMG_H } = this;
+        const accent  = agent.accentColor || "#64748B";
+        const gradEnd = agent.gradientEnd || "#0d1018";
+
+        // Base diagonal gradient: accent (top-left) → deep gradientEnd (bottom-right)
+        const g = ctx.createLinearGradient(0, 0, W, IMG_H);
+        g.addColorStop(0,    this.HexToRgba(accent, 0.60));
+        g.addColorStop(0.55, this.HexToRgba(gradEnd, 0.92));
+        g.addColorStop(1,    this.HexToRgba(gradEnd, 1));
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, IMG_H);
+
+        // Soft radial bloom behind the emoji
+        const bloom = ctx.createRadialGradient(W / 2, IMG_H * 0.46, 10, W / 2, IMG_H * 0.46, W * 0.6);
+        bloom.addColorStop(0, this.HexToRgba(accent, 0.30));
+        bloom.addColorStop(1, this.HexToRgba(accent, 0));
+        ctx.fillStyle = bloom;
+        ctx.fillRect(0, 0, W, IMG_H);
+
+        // Faint category motif (alpha kept low so emoji stays dominant)
+        ctx.save();
+        ctx.strokeStyle = this.HexToRgba("#FFFFFF", 0.05);
+        ctx.fillStyle   = this.HexToRgba("#FFFFFF", 0.045);
+        ctx.lineWidth   = 1;
+
+        switch (agent.category) {
+            case "dev": {
+                // Monospace-style grid (code editor feel)
+                for (let x = 0; x <= W; x += 34) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, IMG_H); ctx.stroke(); }
+                for (let y = 0; y <= IMG_H; y += 34) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+                break;
+            }
+            case "design": {
+                // Concentric arcs (palette / radius motif)
+                for (let r = 60; r < W; r += 60) { ctx.beginPath(); ctx.arc(W * 0.8, IMG_H * 0.25, r, 0, Math.PI * 2); ctx.stroke(); }
+                break;
+            }
+            case "qa": {
+                // Diagonal scan stripes (inspection feel)
+                ctx.lineWidth = 14;
+                ctx.strokeStyle = this.HexToRgba("#FFFFFF", 0.035);
+                for (let x = -IMG_H; x < W; x += 46) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + IMG_H, IMG_H); ctx.stroke(); }
+                break;
+            }
+            default: {
+                // utility — dot constellation
+                for (let i = 0; i < 60; i++) {
+                    const dx = (i * 97) % W;
+                    const dy = (i * 53) % IMG_H;
+                    ctx.beginPath(); ctx.arc(dx, dy, 1.6, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+        }
+        ctx.restore();
     },
 
     // ─── Enhanced vignette: edge darkening + accent bottom radial glow ───────

@@ -39,12 +39,52 @@ const AC = {
         this.canvas = document.getElementById("agentCanvas");
         this.ctx    = this.canvas.getContext("2d");
 
+        // URL'den ?agent=ID parametresini oku (browse.html'den geldiyse)
+        const params  = new URLSearchParams(window.location.search);
+        const reqId   = params.get("agent");
+
         $.getJSON("js/JSON/agents.json", (data) => {
             this.agents = data.agents;
             this.PopulateSelector();
+
+            // 1) Curated 15 agent içinde mi?
+            if (reqId && this.agents.find(a => a.id === reqId)) {
+                this.Make(reqId);
+                $("#agentCountChip").text(this.agents.length + " agent");
+                return;
+            }
+
+            // 2) Yok ise scraped pool'a bak
+            if (reqId) {
+                this.LoadScrapedAgent(reqId);
+                return;
+            }
+
+            // 3) Param yok — ilkini render et
             if (this.agents.length > 0) this.Make(this.agents[0].id);
             $("#agentCountChip").text(this.agents.length + " agent");
         }).fail(() => console.error("agents.json yüklenemedi."));
+    },
+
+    // ─── Scraped pool'dan tek agent yükle ────────────────────────────────
+    LoadScrapedAgent: function (id) {
+        $.getJSON("js/JSON/normalized-agents.json", (data) => {
+            const pool = Array.isArray(data) ? data : (data.agents || data);
+            const agent = pool.find(a => a.id === id);
+            if (!agent) {
+                console.error(`Scraped agent '${id}' not found in normalized pool`);
+                if (this.agents.length > 0) this.Make(this.agents[0].id);
+                return;
+            }
+            // Scraped agent'ı curated listeye geçici olarak ekle ki dropdown'da görünsün
+            this.agents.unshift(agent);
+            this.PopulateSelector();
+            this.Make(agent.id);
+            $("#agentCountChip").text(`${this.agents.length} agent (1 prompt browser'dan)`);
+        }).fail(() => {
+            console.error("normalized-agents.json yüklenemedi");
+            if (this.agents.length > 0) this.Make(this.agents[0].id);
+        });
     },
 
     // ─── Dropdown ────────────────────────────────────────────────────────

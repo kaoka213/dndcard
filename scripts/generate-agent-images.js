@@ -34,14 +34,27 @@ const USE_VERTEX   = Boolean(GCP_PROJECT);          // auto-detect: project var 
 const MODEL = "imagen-4.0-generate-001";
 const OUTPUT_DIR = path.join(__dirname, "..", "agent-cards", "images", "agents");
 const AGENTS_JSON = path.join(__dirname, "..", "agent-cards", "js", "JSON", "agents.json");
+const NORMALIZED_JSON = path.join(__dirname, "..", "agent-cards", "js", "JSON", "normalized-agents.json");
 const DELAY_MS = 2500;
 const MAX_ATTEMPTS = 3;
 
+// ─── CLI flags ─────────────────────────────────────────────────────────────────
+
+function flagValue(name) {
+    const idx = process.argv.indexOf(name);
+    return idx !== -1 ? process.argv[idx + 1] : null;
+}
+
 const FORCE = process.argv.includes("--force");
 const NO_VALIDATE = process.argv.includes("--no-validate");
-const SINGLE_ID = (() => {
-    const idx = process.argv.indexOf("--id");
-    return idx !== -1 ? process.argv[idx + 1] : null;
+const SINGLE_ID = flagValue("--id");
+// --source curated (default, 15 agents) | normalized (4587 scraped pool)
+const SOURCE = (flagValue("--source") || "curated").toLowerCase();
+const FILTER_CATEGORY = flagValue("--category");       // design | dev | qa | utility
+const FILTER_SOURCE_REPO = flagValue("--source-repo"); // substring match on source_repo
+const LIMIT = (() => {
+    const v = flagValue("--limit");
+    return v ? parseInt(v, 10) : null;
 })();
 
 if (!USE_VERTEX && !API_KEY) {
@@ -155,15 +168,39 @@ async function generateValidated(ai, prompt, agentName) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-    const agentsData = JSON.parse(fs.readFileSync(AGENTS_JSON, "utf-8"));
-    let agents = agentsData.agents;
+    // Pick the source pool: curated 15 (agents.json) or scraped 4587 (normalized-agents.json)
+    const sourceFile = SOURCE === "normalized" ? NORMALIZED_JSON : AGENTS_JSON;
+    if (!fs.existsSync(sourceFile)) {
+        console.error(`❌ Source file not found: ${sourceFile}`);
+        if (SOURCE === "normalized") console.error("    Run: node agent-cards/scraper/normalize.js");
+        process.exit(1);
+    }
+    const agentsData = JSON.parse(fs.readFileSync(sourceFile, "utf-8"));
+    let agents = agentsData.agents || [];
 
     if (SINGLE_ID) {
         agents = agents.filter((a) => a.id === SINGLE_ID);
         if (agents.length === 0) {
-            console.error(`❌ Agent '${SINGLE_ID}' not found in agents.json`);
+            console.error(`❌ Agent '${SINGLE_ID}' not found in ${path.basename(sourceFile)}`);
             process.exit(1);
         }
+    }
+
+    // Optional filters (skip when targeting a single id)
+    if (!SINGLE_ID && FILTER_CATEGORY) {
+        agents = agents.filter((a) => a.category === FILTER_CATEGORY);
+    }
+    if (!SINGLE_ID && FILTER_SOURCE_REPO) {
+        agents = agents.filter((a) => (a.source_repo || "").includes(FILTER_SOURCE_REPO));
+    }
+
+    // Prioritise agents that still need an image (resume-friendly ordering),
+    // then cap with --limit. --force keeps original order since nothing is skipped.
+    if (!FORCE) {
+        agents = agents.filter((a) => !fs.existsSync(path.join(OUTPUT_DIR, `${a.id}.jpg`)));
+    }
+    if (LIMIT && agents.length > LIMIT) {
+        agents = agents.slice(0, LIMIT);
     }
 
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -179,10 +216,19 @@ async function main() {
     console.log(`   Model       : ${MODEL}`);
     console.log(`   Validation  : ${NO_VALIDATE ? "DISABLED" : "ENABLED (Gemini 2.5 Flash)"}`);
     console.log(`   Max attempts: ${MAX_ATTEMPTS}`);
+    console.log(`   Source      : ${SOURCE} (${path.basename(sourceFile)})`);
+    if (FILTER_CATEGORY)    console.log(`   Category    : ${FILTER_CATEGORY}`);
+    if (FILTER_SOURCE_REPO) console.log(`   SourceRepo  : *${FILTER_SOURCE_REPO}*`);
+    if (LIMIT)              console.log(`   Limit       : ${LIMIT}`);
     console.log(`   Output      : ${OUTPUT_DIR}`);
-    console.log(`   Agents      : ${agents.length}`);
+    console.log(`   Agents      : ${agents.length}${FORCE ? "" : " (missing-only)"}`);
     console.log(`   Force       : ${FORCE}`);
     console.log("─".repeat(60));
+
+    if (agents.length === 0) {
+        console.log("✅ Üretilecek agent yok (hepsinin görseli zaten var ya da filtre boş döndü).");
+        return;
+    }
 
     let success = 0, skipped = 0, partial = 0, failed = 0;
 
@@ -244,8 +290,19 @@ async function main() {
     console.log(`\n💡 http://localhost:8080/agent-cards/agent-cards.html\n`);
 }
 
-main().catch((err) => {
-    console.error("\n❌ Beklenmedik hata:", err.message);
-    console.error(err.stack);
-    process.exit(1);
-});
+// Run main() only if executed as CLI (not when require'd by serve.js)
+if (require.main === module) {
+    main().catch((err) => {
+        console.error("\n❌ Beklenmedik hata:", err.message);
+        console.error(err.stack);
+        process.exit(1);
+    });
+}
+
+// Export for server reuse
+module.exports = {
+    generateValidated,
+    generateImage,
+    MODEL,
+    sleep,
+};
