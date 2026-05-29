@@ -1,1 +1,2 @@
 - [Agent Cards Modülü](project-agent-cards.md) — DNDCard'a eklenen agent kart görselleştirme modülünün tüm tasarım ve implementasyon kararları
+- [LoR Kart Anatomisi](reference-lor-card-anatomy.md) — Legends of Runeterra kart tasarım anatomisi (RuneterraFire + lor-card-maker kaynak kodu), agent-cards'a uygulanabilecek 8 pattern

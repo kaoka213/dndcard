@@ -98,288 +98,75 @@ const AC = {
         img.src = `images/agents/${agentId}.jpg`;
     },
 
-    // Load category-level fallback image (like DnD's cardsources.json category grouping)
-    _loadCatImage: function (agent, cb) {
-        const cat = agent.category;
-        if (this.catImages.hasOwnProperty(cat)) return cb(this.catImages[cat]);
-        const img = new Image();
-        img.onload  = () => { this.catImages[cat] = img;  cb(img);  };
-        img.onerror = () => { this.catImages[cat] = null; cb(null); };
-        img.src = `images/categories/${cat}.jpg`;
-    },
-
-    // ─── Draw — dispatches to category template ───────────────────────────
-    // Inspired by lor-card-maker: each card *type* has its own render component
-    // (unit.js, spell.js, champion.js). Here: category → template function.
-    Draw: function (agent, img) {
+    // ─── Master draw function ───────────────────────────────────────────
+    Draw: function (agent, bgImage) {
         const { ctx, W, H } = this;
         ctx.clearRect(0, 0, W, H);
 
-        // Shared layers: base + portrait + fade (same for all templates)
-        this.DrawCardBase(agent);
-        this.DrawPortrait(agent, img);
-        this.DrawFade(agent);
+        // 1. Background (image or gradient)
+        this.DrawBackground(agent, bgImage);
 
-        // Category-specific template from here on
-        switch (agent.category) {
-            case "design":  this._templateDesign(agent);  break;
-            case "dev":     this._templateDev(agent);     break;
-            case "qa":      this._templateQA(agent);      break;
-            case "utility":
-            default:        this._templateUtility(agent); break;
-        }
+        // 2. Dark overlay for text readability (always applied)
+        this.DrawOverlay(agent);
 
+        // 3. Subtle dot texture
+        this.DrawTexture();
+
+        // 4. Header: emoji + name + badge
+        let yPos = this.DrawHeader(agent);
+
+        // 5. Separator
+        yPos = this.DrawSeparator(yPos);
+
+        // 6. Description
+        yPos = this.DrawDescription(agent, yPos);
+
+        // 7. Capabilities
+        yPos = this.DrawCapabilities(agent, yPos);
+
+        // 8. Tools
+        this.DrawTools(agent, yPos);
+
+        // 9. Footer
         this.DrawFooter(agent);
+
+        // 10. Border glow
         this.DrawBorder(agent);
     },
 
-    // ─── TEMPLATE: Design ─ artistic, creative, centred ──────────────────
-    _templateDesign: function (agent) {
-        const { ctx, W, IMG_H, PAD } = this;
+    // ─── Background ─────────────────────────────────────────────────────
+    DrawBackground: function (agent, bgImage) {
+        const { ctx, W, H } = this;
 
-        // Diagonal paint-stroke accent at portrait top-right corner
-        ctx.save();
-        ctx.globalAlpha = 0.13;
-        ctx.beginPath();
-        ctx.moveTo(W * 0.60, 0);
-        ctx.lineTo(W, 0);
-        ctx.lineTo(W, IMG_H * 0.38);
-        ctx.lineTo(W * 0.28, 0);
-        ctx.closePath();
-        ctx.fillStyle = agent.accentColor;
-        ctx.fill();
-        ctx.restore();
+        if (bgImage) {
+            // Imagen-generated image: fill canvas, cover-style
+            const imgAR = bgImage.naturalWidth / bgImage.naturalHeight;
+            const canvasAR = W / H;
+            let sx = 0, sy = 0, sw = bgImage.naturalWidth, sh = bgImage.naturalHeight;
+            if (imgAR > canvasAR) {
+                sw = bgImage.naturalHeight * canvasAR;
+                sx = (bgImage.naturalWidth - sw) / 2;
+            } else {
+                sh = bgImage.naturalWidth / canvasAR;
+                sy = (bgImage.naturalHeight - sh) / 2;
+            }
+            ctx.drawImage(bgImage, sx, sy, sw, sh, 0, 0, W, H);
+        } else {
+            // Gradient fallback
+            const grad = ctx.createLinearGradient(0, 0, 0, H);
+            grad.addColorStop(0, this.HexToRgba(agent.accentColor, 0.4));
+            grad.addColorStop(0.45, this.HexToRgba(agent.accentColor, 0.1));
+            grad.addColorStop(1, "#0a0a12");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
 
-        // Left accent bar
-        ctx.fillStyle = this.HexToRgba(agent.accentColor, 0.70);
-        ctx.fillRect(0, IMG_H * 0.12, 3, IMG_H * 0.76);
-
-        // Name + badge (left-aligned, overlaid on portrait)
-        this.DrawNameOverlay(agent);
-
-        // Lower text section
-        let y = IMG_H + 16;
-        y = this.DrawDescription(agent, y);
-
-        // Capabilities — 2-column grid cards (like lor-card-maker keyword chips)
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
-        ctx.fillStyle = agent.accentColor;
-        ctx.textAlign = "left";
-        ctx.fillText("YETENEKLER", PAD, y);
-        y += 14;
-
-        const colW = (W - PAD * 2 - 8) / 2;
-        agent.capabilities.forEach((cap, i) => {
-            const col = i % 2;
-            const row = Math.floor(i / 2);
-            const cx  = PAD + col * (colW + 8);
-            const cy  = y + row * 30;
-
-            ctx.fillStyle   = "rgba(255,255,255,0.06)";
-            this.RoundRect(ctx, cx, cy - 12, colW, 24, 6); ctx.fill();
-            ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.28);
-            ctx.lineWidth   = 1;
-            this.RoundRect(ctx, cx, cy - 12, colW, 24, 6); ctx.stroke();
-
-            ctx.font = `11px ${this.FONT_FAMILY}`;
-            ctx.fillStyle = this.COLORS.white;
-            ctx.textAlign = "center";
-            const truncated = this._truncate(ctx, cap, colW - 14);
-            ctx.fillText(truncated, cx + colW / 2, cy + 3);
-        });
-
-        const capRows = Math.ceil(agent.capabilities.length / 2);
-        y += capRows * 30 + 14;
-        this.DrawTools(agent, y);
-    },
-
-    // ─── TEMPLATE: Dev ─ terminal aesthetic, code-block style ────────────
-    _templateDev: function (agent) {
-        const { ctx, W, IMG_H, PAD } = this;
-
-        // Terminal header bar at very top of portrait
-        const barH = 32;
-        const barG = ctx.createLinearGradient(0, 0, W, 0);
-        barG.addColorStop(0, this.HexToRgba(agent.accentColor, 0.88));
-        barG.addColorStop(1, this.HexToRgba(agent.accentColor, 0.12));
-        ctx.fillStyle = barG;
-        ctx.fillRect(0, 0, W, barH);
-
-        // macOS-style traffic dots
-        [14, 26, 38].forEach((x, i) => {
-            ctx.beginPath();
-            ctx.arc(x, barH / 2, 5, 0, Math.PI * 2);
-            ctx.fillStyle = ["#FF5F57", "#FEBC2E", "#28C840"][i];
-            ctx.fill();
-        });
-        ctx.font      = `600 11px ${this.MONO_FAMILY}`;
-        ctx.fillStyle = "rgba(0,0,0,0.75)";
-        ctx.textAlign = "left";
-        ctx.fillText(`~ ${agent.id}`, 58, barH / 2 + 4);
-
-        // Right-side vertical accent line on portrait
-        ctx.fillStyle = this.HexToRgba(agent.accentColor, 0.55);
-        ctx.fillRect(W - 3, barH, 3, IMG_H - barH);
-
-        // Grid overlay on portrait
-        ctx.save();
-        ctx.globalAlpha = 0.035;
-        ctx.strokeStyle = agent.accentColor;
-        ctx.lineWidth   = 1;
-        for (let x = 0; x < W; x += 28) {
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, IMG_H); ctx.stroke();
+            // Radial glow
+            const radial = ctx.createRadialGradient(W / 2, 70, 0, W / 2, 70, 280);
+            radial.addColorStop(0, this.HexToRgba(agent.accentColor, 0.35));
+            radial.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = radial;
+            ctx.fillRect(0, 0, W, H);
         }
-        ctx.restore();
-
-        // Name + badge
-        this.DrawNameOverlay(agent);
-
-        // Lower section
-        let y = IMG_H + 16;
-        y = this.DrawDescription(agent, y);
-
-        // Capabilities — code-block style with monospace prefix
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
-        ctx.fillStyle = agent.accentColor;
-        ctx.textAlign = "left";
-        ctx.fillText("// YETENEKLER", PAD, y);
-        y += 14;
-
-        agent.capabilities.forEach(cap => {
-            ctx.font = `11px ${this.MONO_FAMILY}`;
-            ctx.fillStyle = this.HexToRgba(agent.accentColor, 0.65);
-            ctx.fillText("  › ", PAD, y);
-            const prefW = ctx.measureText("  › ").width;
-            ctx.font = `11px ${this.FONT_FAMILY}`;
-            ctx.fillStyle = this.COLORS.white;
-            ctx.fillText(cap, PAD + prefW, y);
-            y += 20;
-        });
-
-        y += 8;
-        this.DrawTools(agent, y, true); // monospace tool chips
-    },
-
-    // ─── TEMPLATE: QA ─ shield motif, checklist style ────────────────────
-    _templateQA: function (agent) {
-        const { ctx, W, IMG_H, PAD } = this;
-
-        // Diagonal warning stripe on portrait
-        ctx.save();
-        ctx.globalAlpha = 0.055;
-        for (let i = -IMG_H; i < W + IMG_H; i += 38) {
-            ctx.beginPath();
-            ctx.moveTo(i, 0); ctx.lineTo(i + IMG_H, IMG_H);
-            ctx.lineWidth   = 14;
-            ctx.strokeStyle = agent.accentColor;
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        // Shield outline in portrait centre
-        ctx.save();
-        ctx.globalAlpha = 0.07;
-        const sX = W / 2, sY = IMG_H * 0.48, sW = 75, sH = 90;
-        ctx.beginPath();
-        ctx.moveTo(sX, sY - sH);
-        ctx.lineTo(sX + sW, sY - sH * 0.45);
-        ctx.lineTo(sX + sW, sY + sH * 0.25);
-        ctx.quadraticCurveTo(sX + sW, sY + sH, sX, sY + sH);
-        ctx.quadraticCurveTo(sX - sW, sY + sH, sX - sW, sY + sH * 0.25);
-        ctx.lineTo(sX - sW, sY - sH * 0.45);
-        ctx.closePath();
-        ctx.fillStyle = agent.accentColor;
-        ctx.fill();
-        ctx.restore();
-
-        this.DrawNameOverlay(agent);
-
-        let y = IMG_H + 16;
-        y = this.DrawDescription(agent, y);
-
-        // Capabilities — checklist with checkbox style
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
-        ctx.fillStyle = agent.accentColor;
-        ctx.textAlign = "left";
-        ctx.fillText("KONTROL LİSTESİ", PAD, y);
-        y += 14;
-
-        agent.capabilities.forEach(cap => {
-            ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.65);
-            ctx.lineWidth   = 1;
-            ctx.strokeRect(PAD, y - 11, 11, 11);
-            ctx.font = `9px ${this.FONT_FAMILY}`;
-            ctx.fillStyle = agent.accentColor;
-            ctx.fillText("✓", PAD + 1.5, y - 0.5);
-            ctx.font = `11px ${this.FONT_FAMILY}`;
-            ctx.fillStyle = this.COLORS.white;
-            ctx.fillText(cap, PAD + 18, y);
-            y += 21;
-        });
-
-        // Alert bar
-        y += 4;
-        const alertH = 22;
-        ctx.fillStyle   = this.HexToRgba(agent.accentColor, 0.10);
-        ctx.fillRect(PAD, y, W - PAD * 2, alertH);
-        ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.28);
-        ctx.lineWidth   = 1;
-        ctx.strokeRect(PAD, y, W - PAD * 2, alertH);
-        ctx.font = `9px ${this.FONT_FAMILY}`;
-        ctx.fillStyle = this.HexToRgba(agent.accentColor, 0.8);
-        ctx.textAlign = "center";
-        ctx.fillText("⚠  Kalite güvencesi aktif", W / 2, y + alertH / 2 + 3.5);
-        y += alertH + 10;
-
-        this.DrawTools(agent, y);
-    },
-
-    // ─── TEMPLATE: Utility ─ clean, minimal, corner brackets ─────────────
-    _templateUtility: function (agent) {
-        const { ctx, W, IMG_H, PAD } = this;
-
-        // Corner bracket geometry on portrait
-        ctx.save();
-        ctx.globalAlpha = 0.09;
-        ctx.strokeStyle = agent.accentColor;
-        ctx.lineWidth   = 1.5;
-        ctx.beginPath(); ctx.moveTo(0, 55); ctx.lineTo(0, 0); ctx.lineTo(55, 0); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(W, IMG_H - 55); ctx.lineTo(W, IMG_H); ctx.lineTo(W - 55, IMG_H); ctx.stroke();
-        ctx.restore();
-
-        this.DrawNameOverlay(agent);
-
-        let y = IMG_H + 16;
-        y = this.DrawDescription(agent, y);
-
-        // Capabilities — numbered circles
-        ctx.font = `700 8px ${this.FONT_FAMILY}`;
-        ctx.fillStyle = agent.accentColor;
-        ctx.textAlign = "left";
-        ctx.fillText("YETENEKLER", PAD, y);
-        y += 14;
-
-        agent.capabilities.forEach((cap, i) => {
-            ctx.beginPath();
-            ctx.arc(PAD + 7, y - 4, 7, 0, Math.PI * 2);
-            ctx.fillStyle   = this.HexToRgba(agent.accentColor, 0.20); ctx.fill();
-            ctx.strokeStyle = this.HexToRgba(agent.accentColor, 0.45);
-            ctx.lineWidth   = 1; ctx.stroke();
-
-            ctx.font = `600 8px ${this.FONT_FAMILY}`;
-            ctx.fillStyle = agent.accentColor;
-            ctx.textAlign = "center";
-            ctx.fillText(String(i + 1), PAD + 7, y - 0.5);
-
-            ctx.font = `11px ${this.FONT_FAMILY}`;
-            ctx.fillStyle = this.COLORS.white;
-            ctx.textAlign = "left";
-            ctx.fillText(cap, PAD + 20, y);
-            y += 21;
-        });
-
-        y += 8;
-        this.DrawTools(agent, y);
     },
 
     // ─── Dark base for entire card ────────────────────────────────────────
@@ -390,97 +177,49 @@ const AC = {
         g.addColorStop(1,   "#080810");
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, W, H);
+
+        // Subtle accent tint at top
+        const tint = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+        tint.addColorStop(0, this.HexToRgba(agent.accentColor, 0.18));
+        tint.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = tint;
+        ctx.fillRect(0, 0, W, H * 0.5);
     },
 
-    // ─── Portrait image — cover crop, upper IMG_H px ──────────────────────
-    DrawPortrait: function (agent, img) {
-        const { ctx, W, IMG_H } = this;
-
-        if (img) {
-            // Cover-fit: centre-crop to fill 612 × IMG_H
-            const iW = img.naturalWidth, iH = img.naturalHeight;
-            const scale  = Math.max(W / iW, IMG_H / iH);
-            const dW     = iW * scale, dH = iH * scale;
-            const offX   = (W  - dW) / 2;
-            const offY   = (IMG_H - dH) / 2;
-            ctx.save();
-            ctx.beginPath();
-            ctx.rect(0, 0, W, IMG_H);
-            ctx.clip();
-            ctx.drawImage(img, offX, offY, dW, dH);
-            ctx.restore();
-
-            // Very subtle vignette around the portrait edges (not too dark)
-            this.DrawPortraitVignette(agent);
-        } else {
-            // Gradient fallback portrait panel
-            const g = ctx.createLinearGradient(0, 0, 0, IMG_H);
-            g.addColorStop(0, this.HexToRgba(agent.accentColor, 0.5));
-            g.addColorStop(1, this.HexToRgba(agent.accentColor, 0.15));
-            ctx.fillStyle = g;
-            ctx.fillRect(0, 0, W, IMG_H);
-
-            // Big emoji centred as fallback figure
-            ctx.font = `96px ${this.FONT_FAMILY}`;
-            ctx.textAlign = "center";
-            ctx.shadowColor = this.HexToRgba(agent.accentColor, 0.9);
-            ctx.shadowBlur  = 40;
-            ctx.fillStyle   = this.COLORS.white;
-            ctx.fillText(agent.emoji, W / 2, IMG_H / 2 + 36);
-            ctx.shadowBlur = 0;
+    // ─── Dot texture ────────────────────────────────────────────────────
+    DrawTexture: function () {
+        const { ctx, W, H } = this;
+        ctx.fillStyle = "rgba(255,255,255,0.016)";
+        for (let x = 20; x < W; x += 28) {
+            for (let y = 20; y < H; y += 28) {
+                ctx.beginPath();
+                ctx.arc(x, y, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
     },
 
-    // ─── Light vignette on portrait ──────────────────────────────────────
-    DrawPortraitVignette: function (agent) {
-        const { ctx, W, IMG_H } = this;
+    // ─── Header ─────────────────────────────────────────────────────────
+    DrawHeader: function (agent) {
+        const { ctx, W, PAD } = this;
+        let yPos = PAD + 10;
 
-        // Left & right darkening
-        const lG = ctx.createLinearGradient(0, 0, 60, 0);
-        lG.addColorStop(0, "rgba(0,0,0,0.45)");
-        lG.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = lG; ctx.fillRect(0, 0, 60, IMG_H);
+        // Emoji glow halo
+        const halo = ctx.createRadialGradient(W / 2, yPos + 38, 0, W / 2, yPos + 38, 80);
+        halo.addColorStop(0, this.HexToRgba(agent.accentColor, 0.5));
+        halo.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = halo;
+        ctx.fillRect(W / 2 - 100, yPos - 20, 200, 140);
 
-        const rG = ctx.createLinearGradient(W, 0, W - 60, 0);
-        rG.addColorStop(0, "rgba(0,0,0,0.45)");
-        rG.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = rG; ctx.fillRect(W - 60, 0, 60, IMG_H);
-
-        // Top darkening
-        const tG = ctx.createLinearGradient(0, 0, 0, 50);
-        tG.addColorStop(0, "rgba(0,0,0,0.5)");
-        tG.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = tG; ctx.fillRect(0, 0, W, 50);
-    },
-
-    // ─── Gradient fade — image dissolves into dark section ───────────────
-    DrawFade: function (agent) {
-        const { ctx, W, IMG_H } = this;
-        const fadeH = 110;
-        const g = ctx.createLinearGradient(0, IMG_H - fadeH, 0, IMG_H + 20);
-        g.addColorStop(0,   "rgba(0,0,0,0)");
-        g.addColorStop(0.6, "rgba(8,8,16,0.85)");
-        g.addColorStop(1,   "rgba(8,8,16,1)");
-        ctx.fillStyle = g;
-        ctx.fillRect(0, IMG_H - fadeH, W, fadeH + 20);
-
-        // Accent colour tint bleed upward from text section
-        const tint = ctx.createLinearGradient(0, IMG_H - 60, 0, IMG_H + 30);
-        tint.addColorStop(0, "rgba(0,0,0,0)");
-        tint.addColorStop(1, this.HexToRgba(agent.accentColor, 0.18));
-        ctx.fillStyle = tint;
-        ctx.fillRect(0, IMG_H - 60, W, 90);
-    },
-
-    // ─── Name + badge overlaid at bottom of portrait ─────────────────────
-    DrawNameOverlay: function (agent) {
-        const { ctx, W, IMG_H, PAD } = this;
-        const nameY  = IMG_H - 38;
-        const badgeY = IMG_H - 68;
-
-        // Badge first (above name)
-        const catLabels = { design:"Tasarım", dev:"Geliştirme", qa:"Kalite & Test", utility:"Yardımcı" };
-        this.DrawBadge(catLabels[agent.category] || agent.category, PAD, badgeY, agent.accentColor, false);
+        // Emoji
+        ctx.font = `60px ${this.FONT_FAMILY}`;
+        ctx.textAlign = "center";
+        ctx.shadowColor = this.HexToRgba(agent.accentColor, 0.9);
+        ctx.shadowBlur = 28;
+        ctx.fillStyle = this.COLORS.white;
+        ctx.fillText(agent.emoji, W / 2, yPos + 58);
+        ctx.shadowBlur = 0;
+        yPos += 76;
 
         // Agent name
         let fs = 28;
@@ -521,16 +260,32 @@ const AC = {
         return topY + bH;
     },
 
-    // ─── Description ─────────────────────────────────────────────────────
+    // ─── Separator ──────────────────────────────────────────────────────
+    DrawSeparator: function (yPos) {
+        const { ctx, W, PAD } = this;
+        ctx.strokeStyle = this.COLORS.separator;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(PAD, yPos);
+        ctx.lineTo(W - PAD, yPos);
+        ctx.stroke();
+        return yPos + 24;
+    },
+
+    // ─── Description ────────────────────────────────────────────────────
     DrawDescription: function (agent, yPos) {
         const { ctx, W, PAD } = this;
         const maxW = W - PAD * 2;
         ctx.font      = `13px ${this.FONT_FAMILY}`;
         ctx.fillStyle = this.COLORS.textMuted;
         ctx.textAlign = "left";
-        const lines = this.WrapText(ctx, agent.description, maxW);
-        lines.forEach(l => { ctx.fillText(l, PAD, yPos); yPos += 19; });
-        return yPos + 14;
+        const lines = this.WrapText(ctx, agent.description, maxWidth);
+        const lineH = 20;
+        lines.forEach(line => {
+            ctx.fillText(line, PAD, yPos);
+            yPos += lineH;
+        });
+        return yPos + 18;
     },
 
     // ─── Capabilities ────────────────────────────────────────────────────

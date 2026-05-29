@@ -12,9 +12,17 @@
         "Görsel yön planlaması",
         "Repo tasarım varlıkları yönetimi"
       ],
-      "tools": ["WebSearch", "Write", "Edit", "Glob", "Grep", "Read"],
+      "tools": [
+        "WebSearch",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Read"
+      ],
       "accentColor": "#8B5CF6",
-      "gradientEnd": "#1e0a3c"
+      "gradientEnd": "#1e0a3c",
+      "imagePrompt": "hooded mysterious figure holding a single glowing violet playing card"
     },
     {
       "id": "ui-designer",
@@ -28,9 +36,16 @@
         "Responsive layout önerileri",
         "Design system tutarlılığı"
       ],
-      "tools": ["Read", "Write", "Edit", "Glob", "Grep"],
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep"
+      ],
       "accentColor": "#EC4899",
-      "gradientEnd": "#3d0a25"
+      "gradientEnd": "#3d0a25",
+      "imagePrompt": "futuristic robed artist holding a luminous pink colour palette"
     },
     {
       "id": "gamification-ux-advisor",
@@ -44,9 +59,16 @@
         "Streak ve progress mekanikleri",
         "Sosyal engagement artırma"
       ],
-      "tools": ["Read", "Write", "Edit", "Glob", "Grep"],
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep"
+      ],
       "accentColor": "#F59E0B",
-      "gradientEnd": "#3d2200"
+      "gradientEnd": "#3d2200",
+      "imagePrompt": "heroic figure lifting a glowing golden trophy overhead"
     },
     {
       "id": "presentation-designer",
@@ -60,9 +82,14 @@
         "Görsel hikaye anlatımı",
         "Hedef kitleye göre uyarlama"
       ],
-      "tools": ["Read", "Write", "WebSearch"],
+      "tools": [
+        "Read",
+        "Write",
+        "WebSearch"
+      ],
       "accentColor": "#06B6D4",
-      "gradientEnd": "#0a2830"
+      "gradientEnd": "#0a2830",
+      "imagePrompt": "sharp suited presenter pointing at a single floating cyan slide"
     },
     {
       "id": "flutter-univercity-dev",
@@ -76,9 +103,17 @@
         "API entegrasyonu (Dio)",
         "Widget ve ekran oluşturma"
       ],
-      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Bash"
+      ],
       "accentColor": "#0EA5E9",
-      "gradientEnd": "#0a1e30"
+      "gradientEnd": "#0a1e30",
+      "imagePrompt": "young hoodie developer holding a glowing blue smartphone"
     },
     {
       "id": "backend-flutter-univercity",
@@ -92,9 +127,17 @@
         "Flutter + Go full-stack",
         "Infrastructure değişiklikleri"
       ],
-      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Bash"
+      ],
       "accentColor": "#10B981",
-      "gradientEnd": "#0a2518"
+      "gradientEnd": "#0a2518",
+      "imagePrompt": "engineer in dark coat holding a glowing green circuit cube"
     },
     {
       "id": "univercity-lead-architect",
@@ -108,9 +151,18 @@
         "Özellik geliştirme koordinasyonu",
         "Flutter mimari liderliği"
       ],
-      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "Agent"],
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Bash",
+        "Agent"
+      ],
       "accentColor": "#3B82F6",
-      "gradientEnd": "#0a1530"
+      "gradientEnd": "#0a1530",
+      "imagePrompt": "commanding architect holding a luminous blue holographic blueprint scroll"
     },
     {
       "id": "bug-hunter",
@@ -124,9 +176,15 @@
         "Hata pattern tespiti",
         "Bug raporu üretimi"
       ],
-      "tools": ["Read", "Glob", "Grep", "Bash"],
+      "tools": [
+        "Read",
+        "Glob",
+        "Grep",
+        "Bash"
+      ],
       "accentColor": "#EF4444",
-      "gradientEnd": "#3d0a0a"
+      "gradientEnd": "#3d0a0a",
+      "imagePrompt": "noir detective in trench coat holding a glowing red magnifying glass"
     },
     {
       "id": "ghost-code-cleaner",
@@ -140,9 +198,17 @@
         "Sahipsiz dosya tespiti",
         "Deprecated fonksiyon kaldırma"
       ],
-      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Bash"
+      ],
       "accentColor": "#A78BFA",
-      "gradientEnd": "#1a0a3c"
+      "gradientEnd": "#1a0a3c",
+      "imagePrompt": "translucent hooded ghost spirit with soft inner violet glow, arms outstretched"
     },
     {
       "id": "ux-consistency-auditor",
@@ -156,9 +222,14 @@
         "Interaction pattern analizi",
         "Geliştirici UX rehberliği"
       ],
-      "tools": ["Read", "Glob", "Grep"],
+      "tools": [
+        "Read",
+        "Glob",
+        "Grep"
+      ],
       "accentColor": "#F97316",
-      "gradientEnd": "#3d1500"
+      "gradientEnd": "#3d1500",
+      "imagePrompt": "scientist in lab coat holding a glowing orange magnifier"
     },
     {
       "id": "general-purpose",
@@ -172,9 +243,18 @@
         "Bağlam toplama ve sentez",
         "Genel problem çözme"
       ],
-      "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebSearch"],
+      "tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Glob",
+        "Grep",
+        "Bash",
+        "WebSearch"
+      ],
       "accentColor": "#64748B",
-      "gradientEnd": "#0f1520"
+      "gradientEnd": "#0f1520",
+      "imagePrompt": "silver light silhouette of versatile humanoid figure with multiple translucent arms"
     },
     {
       "id": "claude-code-guide",
@@ -188,9 +268,16 @@
         "MCP sunucu yapılandırması",
         "Claude API kullanım rehberi"
       ],
-      "tools": ["Glob", "Grep", "Read", "WebFetch", "WebSearch"],
+      "tools": [
+        "Glob",
+        "Grep",
+        "Read",
+        "WebFetch",
+        "WebSearch"
+      ],
       "accentColor": "#F8CA00",
-      "gradientEnd": "#2a2000"
+      "gradientEnd": "#2a2000",
+      "imagePrompt": "wise hooded elder holding an open glowing golden ancient book"
     },
     {
       "id": "plan",
@@ -204,9 +291,14 @@
         "Mimari değiş tokuş analizi",
         "Adım adım plan oluşturma"
       ],
-      "tools": ["Read", "Glob", "Grep"],
+      "tools": [
+        "Read",
+        "Glob",
+        "Grep"
+      ],
       "accentColor": "#22D3EE",
-      "gradientEnd": "#0a2530"
+      "gradientEnd": "#0a2530",
+      "imagePrompt": "strategic figure in long coat holding a glowing cyan blueprint scroll"
     },
     {
       "id": "explore",
@@ -220,9 +312,14 @@
         "Referans tespiti",
         "Hedefli kod konumlama"
       ],
-      "tools": ["Glob", "Grep", "Read"],
+      "tools": [
+        "Glob",
+        "Grep",
+        "Read"
+      ],
       "accentColor": "#34D399",
-      "gradientEnd": "#0a2515"
+      "gradientEnd": "#0a2515",
+      "imagePrompt": "explorer in long coat holding a glowing teal compass"
     },
     {
       "id": "claude",
@@ -236,9 +333,12 @@
         "Varsayılan fallback",
         "Esnek kapsam"
       ],
-      "tools": ["*"],
+      "tools": [
+        "*"
+      ],
       "accentColor": "#94A3B8",
-      "gradientEnd": "#111827"
+      "gradientEnd": "#111827",
+      "imagePrompt": "serene transcendent humanoid figure made of flowing silver light particles"
     }
   ]
 }
