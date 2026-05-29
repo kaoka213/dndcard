@@ -105,7 +105,15 @@ async function generateValidated(ai, prompt, agentName) {
         try {
             buf = await generateImage(ai, prompt);
         } catch (e) {
-            console.log(`✗ gen error: ${e.message}`);
+            const msg = e.message || "";
+            const isQuota = msg.includes("RESOURCE_EXHAUSTED") || msg.includes("Quota exceeded") || msg.includes("429");
+            if (isQuota) {
+                console.log(`✗ quota — 65 sn bekleniyor…`);
+                await sleep(65000);
+                attempt--; // bu denemeyi yeniden say
+                continue;
+            }
+            console.log(`✗ gen error: ${msg.substring(0, 120)}`);
             await sleep(1500);
             continue;
         }
@@ -125,7 +133,14 @@ async function generateValidated(ai, prompt, agentName) {
             }
             console.log(`✗ ${detail.reason || "validation failed"}`);
         } catch (e) {
-            console.log(`✗ validate error: ${e.message}`);
+            const msg = e.message || "";
+            if (msg.includes("RESOURCE_EXHAUSTED") || msg.includes("429")) {
+                console.log(`✗ validate quota — 30 sn bekleniyor…`);
+                await sleep(30000);
+                attempt--;
+                continue;
+            }
+            console.log(`✗ validate error: ${msg.substring(0, 120)}`);
         }
 
         lastBuf = buf;
