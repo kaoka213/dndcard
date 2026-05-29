@@ -574,22 +574,38 @@ const AC = {
     },
 
     // ─── Batch Export ─────────────────────────────────────────────────────
-    BatchExport: function () {
+    // opts = { category?: "design"|"dev"|"qa"|"utility"|"all", limit?: number }
+    // Filtre verilmezse (veya category "all" ise) TÜM agent'lar indirilir — geriye dönük uyumlu.
+    BatchExport: function (opts) {
         if (this.isBatchRunning) return;
+        opts = opts || {};
+
+        // Kategori filtresi: "all" / boş → hepsi, aksi halde sadece eşleşen kategori
+        let list = this.agents;
+        if (opts.category && opts.category !== "all") {
+            list = list.filter(a => a.category === opts.category);
+        }
+        // Opsiyonel limit: pozitif sayı verilirse ilk N agent
+        const limit = parseInt(opts.limit, 10);
+        if (!isNaN(limit) && limit > 0) {
+            list = list.slice(0, limit);
+        }
+        if (list.length === 0) return;
+
         this.isBatchRunning = true;
         const btn = document.getElementById("batchBtn");
         if (btn) btn.disabled = true;
-        const total = this.agents.length;
+        const total = list.length;
         let index = 0;
 
         const step = () => {
             if (index >= total) {
                 this.isBatchRunning = false;
-                if (btn) { btn.disabled = false; btn.textContent = "⬇ Tümünü İndir"; }
+                if (btn) { btn.disabled = false; btn.textContent = "⬇ İndir"; }
                 if (this.currentAgent) this.Make(this.currentAgent.id);
                 return;
             }
-            const agent = this.agents[index];
+            const agent = list[index];
             if (btn) btn.textContent = `⟳ ${index+1} / ${total} hazırlanıyor…`;
             const bgImg = this.bgImages.hasOwnProperty(agent.id)
                 ? this.bgImages[agent.id]
@@ -648,5 +664,9 @@ $(document).ready(function () {
     AC.Init();
     $("#agentSelect").on("change", function () { AC.Make($(this).val()); });
     $("#downloadBtn").on("click",  function () { AC.Download(); });
-    $("#batchBtn").on("click",     function () { AC.BatchExport(); });
+    $("#batchBtn").on("click",     function () {
+        const category = $("#batchCategory").val() || "all";
+        const limit    = $("#batchLimit").val();
+        AC.BatchExport({ category, limit });
+    });
 });

@@ -102,7 +102,7 @@ app.all("/api/generate-card", async (req, res) => {
     const publicUrl = `/agent-cards/images/agents/${safeId}.jpg`;
 
     // ── Cache hit
-    if (fs.existsSync(outPath) && fs.statSync(outPath).size > 1024) {
+    if (fs.existsSync(outPath) && fs.statSync(outPath).size > 8192) {
         return res.json({ success: true, cached: true, imageUrl: publicUrl });
     }
 
@@ -164,9 +164,17 @@ app.all("/api/generate-card", async (req, res) => {
 // ─── Static file serving (root = project dir) ────────────────────────────────
 app.use(express.static(ROOT_DIR, {
     extensions: ["html"],
+    cacheControl: false, // we set Cache-Control ourselves in setHeaders
     setHeaders: (res, filePath) => {
-        // Disable cache for JSONs during development
-        if (filePath.endsWith(".json")) res.setHeader("Cache-Control", "no-store");
+        // Disable cache for code/data during development — generated images can cache
+        const noCacheExts = [".json", ".js", ".html", ".css"];
+        if (noCacheExts.some(ext => filePath.endsWith(ext))) {
+            res.setHeader("Cache-Control", "no-store, must-revalidate");
+            res.setHeader("Pragma", "no-cache");
+        } else if (filePath.endsWith(".jpg")) {
+            // Generated agent images are immutable per id — cache aggressively
+            res.setHeader("Cache-Control", "public, max-age=31536000");
+        }
     },
 }));
 

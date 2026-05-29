@@ -76,4 +76,16 @@ Seçilen agent'ın `accentColor`'u CSS custom property olarak DOM'a yansıtılı
 - `../dnd/js/jquery-3.4.1.min.js` — mevcut dosyadan referans (kopya yok)
 - PNG download: native `canvas.toDataURL()` → `<a>` click (FileSaver kullanılmadı)
 
+## "Tüm promptları karta" genişlemesi (2026-05-29)
+
+Modül 15 küratörlü agent'tan **4.587 scraped prompt**'a ölçeklendi:
+
+- **Scraper** (`scraper/scrape-agents.js`) 12 kaynaktan toplar → `scraped-agents.json`. **normalize.js** kart şemasına çevirir → `normalized-agents.json` (4.587).
+- **normalize.js zenginleştirildi:** her agent'a `imagePrompt` (kategori→arketip + isim/tag motif sözlüğü), `gradientEnd` (accent'in HSL-darken hali), `sigLabel`, ve prompt başlıklarından türetilen daha zengin `capabilities`/`tools` eklendi.
+- **browse.html** = 4.587 promptluk arama/filtre/pagination kütüphanesi; mini-kartlar premium yapıldı (üstte görsel/prosedürel-gradient art-şeridi + emoji, altta UPPERCASE isim + capability chip). Modaldan `agent-cards.html?agent=ID` köprüsü.
+- **Prosedürel fallback:** görseli olmayan kartlar `art-blur-polygon.js`'teki `DrawProceduralBackdrop` ile dolu görünür (accent→gradientEnd diagonal gradient + radial bloom + kategori motifi: dev=grid, design=arc, qa=scan stripe, utility=dot).
+- Görsel üretimi için bkz. [[reference-imagen-generation]]. Ayrıca `scripts/lib/derive-subject.js` LLM-tabanlı subject türetici mevcut.
+- **On-demand üretim sunucusu:** `scripts/serve.js` (Express) `npx http-server`'ı değiştirir; `/api/generate-card?id=<id>` endpoint'i browse'daki "✨ Kartı Üret" butonundan tetiklenir → cache kontrol → findAgent → withLock (tek seferde 1 üretim) → imagePrompt (curated) veya `deriveSubject` (scraped) → buildPrompt → generateValidated → diske yaz → `agent-cards.html?agent=ID` açılır. browse fetch'inde 180sn AbortController timeout, cache eşiği 8KB, üretilen `.jpg`'lerde uzun Cache-Control.
+- **Veri kalitesi QA pass'i:** normalize.js iyileştirildi — `skipTags` daraltıldı (capabilities zenginleşti), `TOOL_KEYWORDS` gevşetildi (default-tool oranı %81→%74), `KEYWORD_MOTIFS`'e utility motifleri + `buildImagePrompt`'a id-seed'li varyasyon eklendi (distinct imagePrompt 124→3526, generic fallback 1119→317). `['System Prompt']` floor'u 12 (yapısız role-play prompt'ları).
+
 [[user-profile]]

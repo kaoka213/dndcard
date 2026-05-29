@@ -1,2 +1,4 @@
 - [Agent Cards Modülü](project-agent-cards.md) — DNDCard'a eklenen agent kart görselleştirme modülünün tüm tasarım ve implementasyon kararları
 - [LoR Kart Anatomisi](reference-lor-card-anatomy.md) — Legends of Runeterra kart tasarım anatomisi (RuneterraFire + lor-card-maker kaynak kodu), agent-cards'a uygulanabilecek 8 pattern
+- [Imagen Görsel Üretimi](reference-imagen-generation.md) — Vertex AI auth (proje agent-deck-497810, ADC kurulu), generate-agent-images.js bayrakları, validation gözlemi
+- [Paralel Fan-Out Tercihi](feedback-parallel-fanout.md) — kullanıcı çok-parçalı işleri dosya-ayrık workstream'lere bölüp paralel subagent takımıyla istiyor

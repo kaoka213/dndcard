@@ -40,3 +40,26 @@ This policy defines how to generate consistent agent portrait images for the car
 3) Pick 1-2 motifs from `capabilities` and convert them into abstract props.
 4) Apply color rules from `accentColor` and `gradientEnd`.
 5) Generate a prompt using the template, then validate against restrictions.
+
+## Pool-Based Generation (scaling to the scraped library)
+
+`normalize.js` now writes an `imagePrompt` (6–15 word subject) and `gradientEnd`
+for every agent, so the generator can run over the full 4,587-agent pool, not
+just the curated 15. Generation is **best-effort and incremental** — a
+procedural gradient fallback renders any agent that has no image yet, so the
+system is always complete without every image existing.
+
+`scripts/generate-agent-images.js` flags:
+
+- `--source curated|normalized` — pool to read (`agents.json` vs `normalized-agents.json`). Default `curated`.
+- `--category design|dev|qa|utility` — restrict to one category.
+- `--source-repo <substr>` — restrict to a source repository (e.g. `lobehub`).
+- `--limit N` — cap how many are generated this run.
+- `--id <agentId>` — single agent.
+- `--force` — regenerate even if `images/agents/{id}.jpg` exists.
+- `--no-validate` — skip Gemini Vision validation.
+
+By default only agents **missing** an image are processed, so re-running resumes
+where the last run stopped. Recommended priority order: curated 15 → high-value
+categories (`dev`, `design`) → remaining pool. Run large batches in the
+background (Vertex quota throttling and retries are handled in-script).

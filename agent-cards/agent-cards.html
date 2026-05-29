@@ -6,6 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Agent Cards</title>
     <link rel="stylesheet" href="css/agent-cards-style.css" />
+    <style>
+        /* Batch export controls — dark-mode SaaS, mevcut değişkenleri kullanır */
+        .batch-row {
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .batch-label {
+            color: var(--text-muted);
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .batch-select {
+            flex: 0 0 auto;
+            min-width: 150px;
+        }
+        .batch-limit {
+            width: 84px;
+            background-color: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 14px;
+            padding: 10px 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .batch-limit:focus {
+            border-color: var(--accent);
+        }
+    </style>
 </head>
 
 <body>
@@ -46,12 +79,26 @@
             <button id="downloadBtn" class="btn btn-primary">
                 ↓ PNG İndir
             </button>
-            <button id="batchBtn" class="btn btn-secondary">
-                ⬇ Tümünü İndir
-            </button>
             <a href="browse.html" class="btn btn-secondary" style="text-decoration:none;">
                 🔍 Tüm Promptlar
             </a>
+        </div>
+
+        <!-- Batch export controls -->
+        <div class="action-row batch-row">
+            <label for="batchCategory" class="batch-label">Kategori:</label>
+            <select id="batchCategory" class="agent-select batch-select">
+                <option value="all">Tümü</option>
+                <option value="design">Tasarım</option>
+                <option value="dev">Geliştirme</option>
+                <option value="qa">QA</option>
+                <option value="utility">Yardımcı</option>
+            </select>
+            <label for="batchLimit" class="batch-label">Limit:</label>
+            <input type="number" id="batchLimit" class="batch-limit" min="1" placeholder="hepsi" />
+            <button id="batchBtn" class="btn btn-secondary">
+                ⬇ İndir
+            </button>
         </div>
 
         <!-- Meta -->

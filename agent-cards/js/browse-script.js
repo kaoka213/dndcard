@@ -138,10 +138,13 @@ const Browse = {
                 const agent = this.allAgents.find(a => a.id === id);
                 if (agent) this.openModal(agent);
             });
+            // "Kartı Aç ↗" → directly trigger image generation + open card view
             el.querySelector('.mini-card-btn')?.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const agent = this.allAgents.find(a => a.id === id);
-                if (agent) this.openModal(agent);
+                if (!agent) return;
+                this.activeModal = agent; // openCardView reads this
+                this.openCardView(e.target);
             });
         });
     },
@@ -172,7 +175,7 @@ const Browse = {
                 </div>` : ''}
                 <div class="mini-card-footer">
                     <span class="mini-card-source">${src}</span>
-                    <button class="mini-card-btn">Kartı Aç ↗</button>
+                    <button class="mini-card-btn">✨ Kartı Üret</button>
                 </div>
             </div>
         </article>`;
@@ -248,23 +251,31 @@ const Browse = {
         });
     },
 
-    async openCardView() {
+    async openCardView(triggerEl) {
         if (!this.activeModal) return;
         const id  = this.activeModal.id;
-        const btn = document.getElementById('cardBtn');
+        // Use provided button (from mini-card) or fallback to modal's #cardBtn
+        const btn = triggerEl || document.getElementById('cardBtn');
         if (!btn) return;
 
         const originalLabel = btn.innerHTML;
         btn.disabled  = true;
-        btn.innerHTML = '✨ Görsel hazırlanıyor… (5-15 sn)';
+        btn.innerHTML = '✨ Hazırlanıyor… (5-15 sn)';
+
+        // Abort generation if it runs too long — image gen + validation can stall.
+        const controller = new AbortController();
+        const GEN_TIMEOUT_MS = 180000; // 180 sn
+        const timeoutId = setTimeout(() => controller.abort(), GEN_TIMEOUT_MS);
 
         try {
             // Trigger on-demand Imagen generation (cached if previously made)
             const r = await fetch(`/api/generate-card?id=${encodeURIComponent(id)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ id })
+                body:    JSON.stringify({ id }),
+                signal:  controller.signal
             });
+            clearTimeout(timeoutId);
             const data = await r.json().catch(() => ({}));
 
             if (!r.ok || !data.success) {
@@ -288,13 +299,20 @@ const Browse = {
                 btn.innerHTML = originalLabel;
             }, 400);
         } catch (e) {
-            console.error('Card generation failed:', e);
-            btn.innerHTML = '❌ Hata — fallback açılıyor';
+            clearTimeout(timeoutId);
+            const aborted = e && e.name === 'AbortError';
+            if (aborted) {
+                console.warn(`Card generation timed out after ${GEN_TIMEOUT_MS}ms, opening with fallback`);
+                btn.innerHTML = '⚠ Üretim uzun sürdü, görselsiz açılıyor…';
+            } else {
+                console.error('Card generation failed:', e);
+                btn.innerHTML = '❌ Hata — fallback açılıyor';
+            }
             setTimeout(() => {
                 window.open(`agent-cards.html?agent=${encodeURIComponent(id)}`, '_blank');
                 btn.disabled  = false;
                 btn.innerHTML = originalLabel;
-            }, 800);
+            }, aborted ? 1000 : 800);
         }
     },
 

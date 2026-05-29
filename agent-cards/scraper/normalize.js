@@ -78,17 +78,17 @@ function pickAccentColor(sourceRepo, category, index) {
 // ─── Tool extraction from prompt text ─────────────────────────────────────────
 
 const TOOL_KEYWORDS = [
-    { keyword: /\bweb\s*search\b|\bsearch\s+the\s+web\b|\bgoogle\s+(it|for)\b/i, tool: 'WebSearch' },
-    { keyword: /\bbrowse\b|\bweb\s*page\b|\bwebsite\b|\bfetch\s+(the\s+)?(url|page|content)\b/i,  tool: 'WebFetch'  },
-    { keyword: /\bwrite\s+(to|a|the)\s+file\b|\bsave\s+(to|a)\s+file\b|\bcreate\s+(a\s+)?file\b/i, tool: 'Write' },
-    { keyword: /\bread\s+(the\s+)?file\b|\bopen\s+(the\s+)?file\b|\bread\s+the\s+code\b/i,  tool: 'Read'  },
-    { keyword: /\bedit\s+(the\s+)?file\b|\bmodify\s+(the\s+)?file\b|\brefactor\b|\bpatch\b/i, tool: 'Edit' },
-    { keyword: /\brun\b|\bexecute\b|\bbash\b|\bterminal\b|\bshell\b|\bcommand\s*line\b|\bcli\b/i, tool: 'Bash' },
-    { keyword: /\bsearch\s+(for\s+)?code\b|\bgrep\b|\bfind\s+(in|files|the)\b|\bsearch\s+the\s+codebase\b/i, tool: 'Grep' },
-    { keyword: /\bglob\b|\bfile\s+pattern\b|\blist\s+files\b/i, tool: 'Glob' },
-    { keyword: /\bgenerate\s+(an?\s+)?image\b|\bdall-?e\b|\bstable\s*diffusion\b|\bmidjourney\b|\bimagen\b/i, tool: 'Image' },
-    { keyword: /\bapi\s+call\b|\bhttp\s+request\b|\brest\s+api\b|\bendpoint\b/i, tool: 'API' },
-    { keyword: /\bdatabase\b|\bsql\b|\bsql\s+query\b|\bpostgres\b|\bmongo\b/i, tool: 'Database' },
+    { keyword: /(?:web|online|internet)\s*search|\bsearch\s+(?:the\s+)?(?:web|online|internet)\b|\bgoogle\s+(it|for|search)\b|\blook\s+up\s+online\b/i, tool: 'WebSearch' },
+    { keyword: /\bbrowse\b|\bweb\s*page\b|\bwebsite\b|\bweb\s*site\b|\burl\b|\bfetch\s+(the\s+)?(url|page|content|website|data)\b|\bscrape\b|\bcrawl\b/i,  tool: 'WebFetch'  },
+    { keyword: /\bwrite\s+(to|a|the|out)?\s*(a\s+)?file\b|\bsave\s+(to|a|the)?\s*(a\s+)?file\b|\bcreate\s+(a\s+)?(new\s+)?file\b|\bgenerate\s+(a\s+)?file\b|\boutput\s+(a\s+)?file\b/i, tool: 'Write' },
+    { keyword: /\bread\s+(the\s+|a\s+|this\s+)?file\b|\bopen\s+(the\s+|a\s+)?file\b|\bread\s+the\s+code\b|\bread\s+(the\s+)?(source|contents?|document)\b|\bload\s+(the\s+|a\s+)?file\b/i,  tool: 'Read'  },
+    { keyword: /\bedit\s+(the\s+|a\s+|this\s+)?file\b|\bmodify\s+(the\s+|a\s+)?file\b|\brefactor\b|\bpatch\b|\bupdate\s+(the\s+)?(code|file|source)\b|\brewrite\s+(the\s+)?code\b|\bfix\s+(the\s+)?(code|bug)\b/i, tool: 'Edit' },
+    { keyword: /\brun\b|\bexecute\b|\bbash\b|\bterminal\b|\bshell\b|\bcommand\s*line\b|\bcli\b|\bcommand\b|\bscript\b/i, tool: 'Bash' },
+    { keyword: /\bsearch\s+(for\s+)?code\b|\bgrep\b|\bfind\s+(in|files|the|all|any)\b|\bsearch\s+(the\s+)?(codebase|repo(?:sitory)?|files?|directory|project)\b|\blocate\b/i, tool: 'Grep' },
+    { keyword: /\bglob\b|\bfile\s+patterns?\b|\blist\s+(the\s+|all\s+)?files\b|\bfile\s+(name\s+)?match/i, tool: 'Glob' },
+    { keyword: /\bgenerate\s+(an?\s+)?image\b|\bcreate\s+(an?\s+)?image\b|\bdall-?e\b|\bstable\s*diffusion\b|\bmidjourney\b|\bimagen\b|\bdraw\s+(an?\s+)?(image|picture)\b|\billustrat/i, tool: 'Image' },
+    { keyword: /\bapi\s+(call|request)\b|\bhttp\s+request\b|\brest(?:ful)?\s+api\b|\bendpoint\b|\bcall\s+(an?\s+)?api\b|\bgraphql\b|\bwebhook\b/i, tool: 'API' },
+    { keyword: /\bdatabase\b|\bsql\b|\bsql\s+query\b|\bpostgres\b|\bmongo\b|\bnosql\b|\bquery\s+(the\s+)?(db|database|table)\b|\btable\s+schema\b/i, tool: 'Database' },
 ];
 
 function extractTools(prompt) {
@@ -210,6 +210,18 @@ const KEYWORD_MOTIFS = [
     { re: /chef|cook|recipe|food|culinary/i,                subject: 'a chef holding a glowing {C} cooking utensil' },
     { re: /music|audio|sound|compose/i,                     subject: 'a robed musician holding a glowing {C} sound wave orb' },
     { re: /devops|deploy|docker|cloud|infrastructure|kubernet/i, subject: 'an engineer holding a glowing {C} server cube' },
+    // Utility-weighted motifs (common assistant / productivity themes)
+    { re: /oracle|advisor|advis|consult|expert|wisdom/i,         subject: 'a robed oracle holding a glowing {C} crystal orb of insight' },
+    { re: /plan|planner|organi[sz]|roadmap|strateg|project\s+manage/i, subject: 'a composed planner arranging glowing {C} floating task tiles' },
+    { re: /calendar|schedul|appointment|reminder|agenda/i,       subject: 'a tidy figure holding a glowing {C} floating calendar dial' },
+    { re: /email|mail|message|inbox|notif|reply|correspond/i,    subject: 'a courier figure holding a glowing {C} winged envelope' },
+    { re: /summar|extract|tldr|digest|condens|brief/i,           subject: 'a scholar compressing glowing {C} text streams into a bright sphere' },
+    { re: /convert|format|transform|parser|parse|encod|decod/i,  subject: 'a tinkerer reshaping a glowing {C} morphing geometric prism' },
+    { re: /recipe|list|checklist|todo|task|grocer|note/i,        subject: 'a figure holding a glowing {C} floating checklist scroll' },
+    { re: /productiv|efficien|workflow|automat|optimi[sz]/i,     subject: 'a focused figure spinning interlocking glowing {C} gears of light' },
+    { re: /search|find|discover|explor|lookup|retriev/i,         subject: 'a seeker holding a glowing {C} compass orb of discovery' },
+    { re: /chat|conversa|companion|friend|persona|character/i,   subject: 'a warm humanoid figure formed of softly glowing {C} light, gesturing in greeting' },
+    { re: /assist|helper|help\b|support|aide|secretary|butler/i, subject: 'a poised humanoid assistant cradling a glowing {C} orb of light' },
     { re: /code|develop|engineer|program|backend|frontend|software|api\b/i, subject: 'a focused hooded developer holding a glowing {C} circuit cube' },
 ];
 
@@ -220,7 +232,30 @@ const CATEGORY_ARCHETYPE = {
     utility: 'a versatile humanoid figure made of flowing {C} light',
 };
 
-function buildImagePrompt(name, tags, description, category, accentHex) {
+// Deterministic 32-bit hash (FNV-1a) of a string → used to seed visual variants.
+function hashString(str) {
+    let h = 0x811c9dc5;
+    const s = String(str == null ? '' : str);
+    for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+    }
+    return h >>> 0;
+}
+
+// Small, schema-neutral variant pools. Each picks deterministically by id hash so
+// agents sharing a motif still differ. Phrases stay generic (no scene/background).
+const POSE_VARIANTS    = ['standing tall', 'seen in profile', 'leaning forward', 'arms crossed',
+                          'mid-gesture', 'turning toward the viewer', 'poised and still', 'three-quarter view'];
+const ATTIRE_VARIANTS  = ['in flowing robes', 'in a tailored coat', 'in layered armor', 'in a hooded cloak',
+                          'in sleek modern garb', 'in ornate ceremonial dress', 'in a worn traveler\'s outfit', 'in a minimalist tunic'];
+const LIGHT_VARIANTS   = ['rim-lit', 'with a faint inner glow', 'softly backlit', 'with sharp contrasting light',
+                          'bathed in gentle light', 'with dramatic shadows', 'haloed in light', 'evenly lit'];
+const ACCENT_VARIANTS  = ['with subtle filigree details', 'with glowing trim', 'with floating motes of light',
+                          'with intricate patterns', 'with a wispy aura', 'with metallic accents',
+                          'with delicate engravings', 'with shimmering threads'];
+
+function buildImagePrompt(name, tags, description, category, accentHex, id) {
     const C = colorName(accentHex);
     const haystack = [name, (tags || []).join(' '), description || ''].join(' ');
     let template = null;
@@ -228,7 +263,27 @@ function buildImagePrompt(name, tags, description, category, accentHex) {
         if (re.test(haystack)) { template = subject; break; }
     }
     if (!template) template = CATEGORY_ARCHETYPE[category] || CATEGORY_ARCHETYPE.utility;
-    return template.replace(/\{C\}/g, C);
+    let subject = template.replace(/\{C\}/g, C);
+
+    // Deterministic per-agent secondary cues so shared motifs stay distinct.
+    const h = hashString(id != null ? id : name);
+    const pose   = POSE_VARIANTS[h % POSE_VARIANTS.length];
+    const attire = ATTIRE_VARIANTS[(h >>> 3) % ATTIRE_VARIANTS.length];
+    const light  = LIGHT_VARIANTS[(h >>> 6) % LIGHT_VARIANTS.length];
+    const accent = ACCENT_VARIANTS[(h >>> 9) % ACCENT_VARIANTS.length];
+
+    // Append a varied cue (rotated by id), then clamp so the subject stays ~6-18 words.
+    // Prefer a two-part cue; fall back to a one-part cue, then no cue, if too long.
+    const wc = s => s.trim().split(/\s+/).length;
+    const pairs   = [`${pose} ${attire}`, `${attire} ${light}`, `${pose} ${light}`, `${light} ${accent}`];
+    const singles = [pose, attire, light, accent];
+    const seed = (h >>> 12) % 4;
+    for (const cue of [pairs[seed], singles[seed], null]) {
+        if (cue === null) return subject;
+        const candidate = `${subject}, ${cue}`;
+        if (wc(candidate) <= 18) return candidate;
+    }
+    return subject;
 }
 
 // ─── Capability extraction from prompt (when tags are weak) ───────────────────
@@ -239,14 +294,19 @@ function extractCapabilitiesFromPrompt(prompt) {
     const lines = prompt.split('\n');
     for (const raw of lines) {
         const line = raw.trim();
-        // Markdown headings (## Title) and list items (- item / 1. item)
-        let m = line.match(/^#{2,4}\s+(.{3,48})$/) ||
-                line.match(/^[-*]\s+(.{3,48})$/) ||
-                line.match(/^\d+[.)]\s+(.{3,48})$/);
+        // Markdown headings (# Title … ###### Title), list items (- / * / + item,
+        // 1. item / 1) item) and bold-label lines (**Label** / __Label__).
+        let m = line.match(/^#{1,6}\s+(.{3,60})$/) ||
+                line.match(/^[-*+]\s+(.{3,60})$/) ||
+                line.match(/^\d+[.)]\s+(.{3,60})$/) ||
+                line.match(/^\*\*(.{3,60}?)\*\*\s*:?\s*$/) ||
+                line.match(/^__(.{3,60}?)__\s*:?\s*$/);
         if (!m) continue;
         let text = m[1].replace(/[*_`:#]+/g, '').replace(/\(.*?\)/g, '').trim();
+        // Trim a trailing description after a delimiter ("Label - blah" / "Label: blah")
+        text = text.replace(/\s+[-–—:]\s+.*$/, '').trim();
         // Skip noise / overly generic headings
-        if (/^(overview|introduction|notes?|examples?|important|warning|context|summary|about)$/i.test(text)) continue;
+        if (/^(overview|introduction|notes?|examples?|important|warning|context|summary|about|instructions?|description|goal|goals|task|tasks|usage|requirements?|output|input|format|rules?|guidelines?|steps?)$/i.test(text)) continue;
         if (text.split(/\s+/).length > 6) text = text.split(/\s+/).slice(0, 5).join(' ');
         text = text.replace(/\b\w/g, c => c.toUpperCase());
         if (text.length >= 3 && !caps.includes(text)) caps.push(text);
@@ -259,8 +319,9 @@ function extractCapabilitiesFromPrompt(prompt) {
 
 function tagsToCapabilities(tags, name) {
     // Prefer tags that read like capabilities (skip generic meta-tags)
+    // Drop only jenerik meta-tags; keep meaningful ones like agent / prompt / code.
     const skipTags = new Set(['chatgpt-prompts', 'role-play', 'general', 'dev', 'danielrosehill',
-                               'fabric', 'pattern', 'leaked', 'system-prompt', 'agent', 'curated',
+                               'fabric', 'pattern', 'leaked', 'system-prompt', 'curated',
                                'claude-code', 'agent-prompt', 'anthropic', 'agentic', 'coding-agent',
                                'system-prompt-library', 'agent-library']);
 
@@ -299,7 +360,7 @@ function normalizeAgent(raw, index) {
     if (tools.length === 0) tools = CATEGORY_DEFAULT_TOOLS[category] || ['Read'];
 
     const sigLabel = (raw.source_repo || '').split('/').pop() || '';
-    const imagePrompt = buildImagePrompt(raw.name, raw.tags, raw.description, category, accentColor);
+    const imagePrompt = buildImagePrompt(raw.name, raw.tags, raw.description, category, accentColor, raw.id);
 
     return {
         // Core fields (card renderer uses these)
